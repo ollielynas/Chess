@@ -35,6 +35,7 @@ pub struct GameData {
 
 
 impl GameData {
+
     pub fn enemy_move(&mut self) {
         if self.enemies.len() < 1 {return}
         let mut filled: Vec<Coord> = vec![];
@@ -50,24 +51,30 @@ impl GameData {
                 }
             }
 
+
             // move to final space
             for j in &filled {
                 loop {
                 if i.moves.len() < 1 {break};
-                if j.x == i.moves[i.moves.len() - 1].x && j.y == i.moves[i.moves.len() - 1].y {
+                if (j.x == i.moves[i.moves.len() - 1].x && j.y == i.moves[i.moves.len() - 1].y) 
+                ||(i.moves[i.moves.len() - 1].x > 15.0 || i.moves[i.moves.len() - 1].x < 0.0 || 
+                    i.moves[i.moves.len() - 1].y > 15.0 ||i.moves[i.moves.len() - 1].y < 0.0
+            )
+                { 
                     i.moves.remove(i.moves.len() - 1)
                 }else {break};
+                
             }
             }
-
             if i.moves.len() > 0 {
                 i.x = i.moves[i.moves.len() - 1].x;
                 i.y = i.moves[i.moves.len() - 1].y;
             }
             filled.push(Coord {x: i.x, y: i.y});
             
-            let x_dist = self.player.x - i.x as f32;
-            let y_dist = self.player.y - i.y as f32;
+            let x_dist = self.player.target_x - i.x as f32;
+            let y_dist = self.player.target_y - i.y as f32;
+
 
             
             i.moves = match i.piece {
@@ -112,26 +119,34 @@ impl GameData {
                     }
                 }
             ),
+
+            Piece::Bishop => (
+                if y_dist.abs() == x_dist.abs() {
+                    println!("lined up");
+                    if x_dist < 0.0 {
+                        if y_dist < 0.0 {
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(1..8)).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 - e as f32}).collect()
+                        }else {
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(1..8)).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 + e as f32}).collect()
+                        }
+                    }else {
+                        if y_dist < 0.0 {
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(1..8)).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 - e as f32}).collect()
+                        }else {
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(1..8)).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 + e as f32}).collect()
+                        }
+                    }
+                }else{
+                    vec![Coord {x: i.x as f32 , y: i.y as f32}]
+                }
+            )
+            ,
 // ||------------------------------ Everything else AI ----------------------||
             _ => vec![]
         };
+        i.moves.retain(|&f| f.x < 16.0 && f.y < 16.0)
         }
-        // this is meant to stop the pieces colliding
-        // if self.enemies.len() <= 1 {return};
-        // for i in 0..&self.enemies.len()-1 {
-        //     for j in self.enemies.clone() {
-        //         loop {
-        //         if self.enemies[i].moves.len() > 0 && j.moves.len() > 0 && self.enemies[i] != j {
-        //             let index = self.enemies[i].moves.len()-1;
-        //             if self.enemies[i].moves[index] == j.moves[j.moves.len()-1] {
-        //                 self.enemies[i].moves.remove(index);
-        //             }else {
-        //                 break;
-        //             }
-        //         } else {break}
-        //     }
-        //     }
-        // }
+
 
     }
     pub fn spawn_enemy(&mut self) {
@@ -148,6 +163,9 @@ impl GameData {
         let mut piece_type = Piece::Pawn;
         if self.round > 10 && thread_rng().gen_bool(0.5+self.round as f64/200.0) {
             piece_type = Piece::Rook;
+        }
+        if self.round > 25 && thread_rng().gen_bool(0.5+self.round as f64/200.0) {
+            piece_type = Piece::Bishop;
         }
 
         self.enemies.push(Enemy {
