@@ -50,11 +50,19 @@ async fn main() {
         ..Default::default()
     };
 
-    let user = UserData {
+    let mut user = UserData {
         left: KeyCode::A,
         right: KeyCode::D,
         up: KeyCode::W,
         down: KeyCode::S,
+        abilities: [
+            Abilities::Blip,
+            Abilities::Null,
+            Abilities::Null,
+            Abilities::Null,
+            Abilities::Null,
+
+        ]
     };
 
     let mut game_data = DEFAULT_GAME_STATE;
@@ -87,7 +95,7 @@ async fn main() {
 
         // when player dies or start new game
         if !game_data.alive {
-            display_home(em);
+            display_home(em, &mut user);
             if is_key_down(KeyCode::Enter) {
                 game_data = DEFAULT_GAME_STATE;
                 game_data.alive = true;

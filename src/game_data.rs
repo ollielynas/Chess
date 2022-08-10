@@ -122,7 +122,6 @@ impl GameData {
 
             Piece::Bishop => (
                 if y_dist.abs() == x_dist.abs() {
-                    println!("lined up");
                     if x_dist < 0.0 {
                         if y_dist < 0.0 {
                             (0..y_dist.abs() as usize +thread_rng().gen_range(1..8)).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 - e as f32}).collect()
@@ -161,10 +160,10 @@ impl GameData {
         };
 
         let mut piece_type = Piece::Pawn;
-        if self.round > 10 && thread_rng().gen_bool(0.5+self.round as f64/200.0) {
+        if self.round > 10 && thread_rng().gen_bool(0.5) {
             piece_type = Piece::Rook;
         }
-        if self.round > 25 && thread_rng().gen_bool(0.5+self.round as f64/200.0) {
+        if self.round > 25 && thread_rng().gen_bool(0.5) {
             piece_type = Piece::Bishop;
         }
 
@@ -180,9 +179,3 @@ impl GameData {
 
 
 
-pub struct UserData {
-    pub left: KeyCode,
-    pub right: KeyCode,
-    pub up: KeyCode,
-    pub down: KeyCode,
-}
