@@ -1,6 +1,7 @@
 use crate::player::*;
 use macroquad::{prelude::*};
 use ::rand::prelude::*;
+use crate::particles_fnc::*;
 
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -31,18 +32,25 @@ pub struct GameData {
     pub round: u64,
     pub enemies: Vec<Enemy>,
     pub alive: bool,
+    pub bubble_particles: Vec<Bubble>
 }
 
 
 impl GameData {
 
     pub fn enemy_move(&mut self) {
-        if self.enemies.len() < 1 {return}
-        let mut filled: Vec<Coord> = vec![];
+        if self.enemies.len() < 1 {
+            println!("no enemies");
+            return
+        }
+
+        let mut filled: Vec<Coord> = vec![
+            Coord {x: -10.0, y: -10.0}
+        ];
         for i in &mut self.enemies {
-
-
-            if i.moves.len() < 1 {return}
+            
+            if i.moves.len() > 1 {
+            
             // loop through the moves being made
             for l in &i.moves {
                 // kills player if hit
@@ -60,7 +68,8 @@ impl GameData {
                 ||(i.moves[i.moves.len() - 1].x > 15.0 || i.moves[i.moves.len() - 1].x < 0.0 || 
                     i.moves[i.moves.len() - 1].y > 15.0 ||i.moves[i.moves.len() - 1].y < 0.0
             )
-                { 
+                {   
+                    // break;
                     i.moves.remove(i.moves.len() - 1)
                 }else {break};
                 
@@ -69,14 +78,13 @@ impl GameData {
             if i.moves.len() > 0 {
                 i.x = i.moves[i.moves.len() - 1].x;
                 i.y = i.moves[i.moves.len() - 1].y;
+                filled.push(Coord {x: i.x, y: i.y});
             }
-            filled.push(Coord {x: i.x, y: i.y});
             
             let x_dist = self.player.target_x - i.x as f32;
             let y_dist = self.player.target_y - i.y as f32;
 
 
-            
             i.moves = match i.piece {
                 // the move list should include the tile the piece is standing on
 // ||------------------------------ Pawn AI -------------------------------|
@@ -136,15 +144,29 @@ impl GameData {
                         }
                     }
                 }else{
-                    vec![Coord {x: i.x as f32 , y: i.y as f32}]
+                    if x_dist.abs() < y_dist.abs() {
+                        if x_dist < 0.0 {
+                            (0..(x_dist.abs() as usize )).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 - e as f32}).collect()
+                        }else {
+                            (0..(x_dist.abs() as usize )).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 - e as f32}).collect()
+                        }
+                    }else {
+                        if y_dist < 0.0 {
+                            (0..(y_dist.abs() as usize )).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 + e as f32}).collect()
+                        }else {
+                            (0..(y_dist.abs() as usize )).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 + e as f32}).collect()
+                        }
+                    }
                 }
             )
             ,
 // ||------------------------------ Everything else AI ----------------------||
-            _ => vec![]
+            _ => vec![Coord {x: i.x as f32 , y: i.y as f32}]
         };
-        i.moves.retain(|&f| f.x < 16.0 && f.y < 16.0)
+        i.moves.retain(|&f| f.x < 16.0 && f.y < 16.0);
+        i.moves.retain(|&f| f.x >= 0.0 && f.y >= 0.0);
         }
+    }
 
 
     }
@@ -168,10 +190,14 @@ impl GameData {
         }
 
         self.enemies.push(Enemy {
-            x: 20.0*(8-spawn_coords.0) as f32,
-            y: 20.0*(8-spawn_coords.1) as f32,
+            x: -20.0*(8-spawn_coords.0) as f32,
+            y: -20.0*(8-spawn_coords.1) as f32,
             piece: piece_type,
-            moves: vec![Coord {x:spawn_coords.0 as f32, y: spawn_coords.1 as f32}]
+            moves: vec![
+                Coord {x: -20.0*(8-spawn_coords.0) as f32, y:-20.0*(8-spawn_coords.1) as f32},
+                Coord {x: -20.0*(8-spawn_coords.0) as f32, y:-20.0*(8-spawn_coords.1) as f32},
+                Coord {x:spawn_coords.0 as f32, y: spawn_coords.1 as f32}
+                ]
         });
         
     }

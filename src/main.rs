@@ -5,9 +5,10 @@ mod game_data;
 use game_data::*;
 mod home;
 use home::*;
-// use macroquad_particles::{self as particles, AtlasConfig, BlendMode, Emitter, EmitterConfig};
-// mod particles_fnc;
-// use particles_fnc::*;
+mod particles_fnc;
+use particles_fnc::*;
+use std::path::Path;
+
 
 const DEFAULT_GAME_STATE: GameData = GameData {
         player: Player {
@@ -20,19 +21,26 @@ const DEFAULT_GAME_STATE: GameData = GameData {
         },
         round: 0,
         enemies: vec![],
-        alive: false
+        alive: false,
+        bubble_particles: vec![],
 };
 
 fn vect_difference(v1: &Vec<Enemy>, v2: &Vec<Enemy>) -> Vec<Enemy> {
     v1.iter().filter(|&x| !v2.contains(x)).cloned().collect()
 }
 
-async fn load_local_texture(id: String) -> Texture2D {
-    return load_texture(&format!("./src/res/{}.png", id)).await.unwrap();
+async fn load_local_texture(id: String, user: &UserData) -> Texture2D {
+    if Path::new(&format!("./src/res/{}/{}.png",user.texture, id)).exists() {
+        return load_texture(&format!("./src/res/{}/{}.png",user.texture, id)).await.unwrap();        
+    }else {
+        let default_texture = "Programmer Art";
+        return load_texture(&format!("./src/res/{}/{}.png",default_texture, id)).await.unwrap(); 
+    }
 }
 
 #[macroquad::main("Chess")]
 async fn main() {
+
     let mut em = (screen_height() / 32.0) * 1.5;
     let mut dsp_square = DrawTextureParams {
         // 32x32
@@ -57,24 +65,35 @@ async fn main() {
         down: KeyCode::S,
         abilities: [
             Abilities::Blip,
+            Abilities::RBlast,
             Abilities::Null,
             Abilities::Null,
             Abilities::Null,
-            Abilities::Null,
-
-        ]
+        ],
+        ability_key: [
+            KeyCode::Key1,
+            KeyCode::Key2,
+            KeyCode::Key3,
+            KeyCode::Key4,
+            KeyCode::Key5,
+            ],
+        texture: "Programmer Art".to_owned()
     };
 
     let mut game_data = DEFAULT_GAME_STATE;
 
-    let select: Texture2D = load_local_texture("select".to_owned()).await;
-    let black_square: Texture2D = load_local_texture("black_square".to_owned()).await;
-    let white_square: Texture2D = load_local_texture("white_square".to_owned()).await;
-    let pawn_texture: Texture2D = load_local_texture("pawn".to_owned()).await;
-    let red_square: Texture2D = load_local_texture("red_square".to_owned()).await;
-    let rook_texture: Texture2D = load_local_texture("rook".to_owned()).await;
-    let bishop_texture: Texture2D = load_local_texture("bishop".to_owned()).await;
+    let select: Texture2D = load_local_texture("select".to_owned(), &user).await;
+    let black_square: Texture2D = load_local_texture("black_square".to_owned(), &user).await;
+    let white_square: Texture2D = load_local_texture("white_square".to_owned(), &user).await;
+    let pawn_texture: Texture2D = load_local_texture("pawn".to_owned(), &user).await;
+    let red_square: Texture2D = load_local_texture("red_square".to_owned(), &user).await;
+    let rook_texture: Texture2D = load_local_texture("rook".to_owned(), &user).await;
+    let bishop_texture: Texture2D = load_local_texture("bishop".to_owned(), &user).await;
     let mut size = 0.0;
+
+
+
+
 
     loop {
 
@@ -138,8 +157,15 @@ async fn main() {
 
 
 
+
+
+        for i in 0..5 {
+            if is_key_pressed(user.ability_key[i]) {
+                activate_ability(user.abilities[i], &mut game_data)
+            }
+        }
         // get user input then make move
-        if player_movement(&mut game_data.player, &user) {
+        if player_movement(&mut game_data.player, &user) || game_data.player.sub_round > 3 {
             game_data.player.sub_round += 1;
             
             let e_1 = game_data.enemies.clone();
@@ -216,7 +242,6 @@ async fn main() {
                             shift_x1 = em*0.2;
                             shift_x2 = em*0.2;
                         }
-
                         draw_line(
                             i.moves[j+1].x*em + em*1.5, 
                             i.moves[j+1].y*em + em*1.5, 
@@ -266,6 +291,17 @@ async fn main() {
     
     }
     game_data.player.update_pos();
+    for i in &mut game_data.bubble_particles {
+        draw_circle(i.x*em, i.y*em, i.r*em, Color {r: i.color[0]/255.0, g: i.color[1]/255.0, b: i.color[2]/255.0, a: i.color[3]/255.0});
+        i.x +=i.x_velocity;
+        i.y += i.y_velocity;
+        i.r -= i.decay;
+        i.lifetime -= 1.0;
+    }
+    game_data.bubble_particles.retain(|f| f.lifetime > 0.0);
+
+
+
     draw_texture_ex(
         game_data.player.texture().await,
         game_data.player.x * em + em,
@@ -323,6 +359,31 @@ async fn main() {
         draw_text(&format!("{}", game_data.round),em * 20.5,5.0 * em,em * 0.8,
         RED
         );
+
+        for i in 0..5 {
+            let mut color = GRAY;
+            if meta_data(user.abilities[i]).cost as f32 <= game_data.player.energy {color = GREEN}
+            draw_text(&format!("{:?}", user.ability_key[i]),
+            18.0*em,
+            (i+7) as f32*em,
+            em*0.8,
+            color,
+            );
+            draw_text(&format!("| {:?}", meta_data(user.abilities[i]).cost),
+            19.5*em,
+            (i+7) as f32*em,
+            em*0.8,
+            color,
+            );
+            draw_text( &("| ".to_owned()+&meta_data(user.abilities[i]).name),
+            21.0*em,
+            (i+7) as f32*em,
+            em*0.8,
+            color,
+            );
+        }
+
+
 
         for i in &game_data.enemies {
             if i.x == selected_square_x && i.y == selected_square_y {
@@ -389,6 +450,8 @@ async fn main() {
                 }
             }
         }
+
+
 
         size = em;
         next_frame().await
