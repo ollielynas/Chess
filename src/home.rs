@@ -5,7 +5,8 @@ use ::rand::prelude::*;
 use macroquad::prelude::*;
 use crate::key_map::*;
 use savefile::prelude::*;
-
+use strum::IntoEnumIterator; // 0.17.1
+use strum_macros::EnumIter; // 0.17.1
 
 fn key_as_string(key: KeyCode) -> String {
     return format!("{:?}", key);
@@ -111,10 +112,10 @@ impl UserData {
 
 
 
-#[derive(Debug, Copy, Clone, PartialEq, Savefile)]
+#[derive(Debug, Copy, Clone, PartialEq, Savefile, EnumIter)]
 pub enum Abilities {
-    RBlast,
     Null,
+    RBlast,
     Blip,
 }
 
@@ -137,8 +138,8 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
     return match a {
         Abilities::Blip => AbilityMetadata {
             name: "blip".to_owned(),
-            description: "gain 10 energy. spawn 5 new pieces. counts as a move".to_owned(),
-            cost: 0,
+            description: "gain 5 energy. spawn 5 new pieces. counts as a move".to_owned(),
+            cost: -5,
         },
         Abilities::RBlast => AbilityMetadata {
             name: "radial blast".to_owned(),
@@ -164,7 +165,6 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData) {
         Abilities::Blip => {
             for _ in 0..5 {
                 data.spawn_enemy();
-                data.player.energy += 1.0;
                 if data.player.energy > 20.0 {
                     data.player.energy = 20.0;
                 }
@@ -216,7 +216,17 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em:f32) {
     if is_key_pressed(KeyCode::Escape) {
         data.select_ability.open = false;
     }
-    draw_rectangle(31.0*em, 31.0*em, em, em, Color {r:0.8, g:0.8, b:0.8, a:1.0})
+    let o: Vec<Abilities> = Abilities::iter().collect();
+    draw_text("Abilities",2.0*em, 2.0*em as f32,  em*1.6, DARKGRAY);
+    let mouse_y = mouse_position().1/em;
+    let mouse_x = mouse_position().0/em;
+
+    for i in 1..o.len() {
+        draw_text(&format!("Name: {}", metadata(o[i]).name),2.0*em, (((i-1)*2) as f32*em + 3.0*em)*1.5,  em, GRAY);
+        draw_text(&format!("Cost: {}", metadata(o[i]).cost),20.0*em, (((i-1)*2) as f32*em + 3.0*em)*1.5,  em, GRAY);
+        draw_text(&format!("{}", metadata(o[i]).description),2.0*em, (((i-1)*2) as f32*em + 3.8*em)*1.5,  em, GRAY);
+        if 
+    }
 }
 
 pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {

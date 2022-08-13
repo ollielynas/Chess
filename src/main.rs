@@ -546,6 +546,13 @@ async fn main() {
                 em*2.0,
                 RED
             );
+            draw_text (
+                "Home",
+                15.0*em,
+                screen_height()/2.0 + em*2.0,
+                em*2.0,
+                GREEN
+            );
             if is_mouse_button_pressed(MouseButton::Left) {
                 println!("{} {}", mouse_x, mouse_y);
                 if mouse_x > 15.0 && mouse_x < 18.3 && mouse_y > 9.7 && mouse_y < 10.6{
@@ -555,6 +562,10 @@ async fn main() {
                         std::process::exit(0x0100);
                     }
                     std::process::exit(0);
+                }
+                if mouse_x > 15.0 && mouse_x < 18.3 && mouse_y > 11.7 && mouse_y < 13.6{
+                    save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
+                    game_data.alive = false;
                 }
             }
         }
