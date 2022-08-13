@@ -3,8 +3,12 @@ use macroquad::{prelude::*};
 use ::rand::prelude::*;
 use crate::particles_fnc::*;
 
+extern crate savefile;
+use savefile::prelude::*;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+
+
+#[derive(Debug, Copy, Clone, PartialEq, Savefile)]
 pub enum Piece {
     Pawn,
     Knight,
@@ -14,12 +18,12 @@ pub enum Piece {
     King
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Savefile)]
 pub struct Coord {
     pub x: f32,
     pub y: f32,
 }
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Savefile)]
 pub struct Enemy {
     pub x:f32,
     pub y:f32,
@@ -27,12 +31,22 @@ pub struct Enemy {
     pub moves: Vec<Coord>,
 }
 
+#[derive(Savefile)]
+pub struct SelectAbility {
+    pub slot: usize,
+    pub y_offset: f32,
+    pub open: bool
+}
+
+#[derive(Savefile)]
 pub struct GameData {
     pub player: Player,
     pub round: u64,
     pub enemies: Vec<Enemy>,
     pub alive: bool,
-    pub bubble_particles: Vec<Bubble>
+    pub bubble_particles: Vec<Bubble>,
+    pub select_ability: SelectAbility,
+    pub pause: bool,
 }
 
 
@@ -144,18 +158,10 @@ impl GameData {
                         }
                     }
                 }else{
-                    if x_dist.abs() < y_dist.abs() {
-                        if x_dist < 0.0 {
-                            (0..(x_dist.abs() as usize )).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 - e as f32}).collect()
-                        }else {
-                            (0..(x_dist.abs() as usize )).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 - e as f32}).collect()
-                        }
-                    }else {
-                        if y_dist < 0.0 {
-                            (0..(y_dist.abs() as usize )).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 + e as f32}).collect()
-                        }else {
-                            (0..(y_dist.abs() as usize )).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 + e as f32}).collect()
-                        }
+                    if x_dist.abs() + y_dist.abs() < 8.0 {
+                            (0..thread_rng().gen_range(1..8)).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 + e as f32}).collect()
+                    }else{
+                        vec![Coord {x: i.x as f32 , y: i.y as f32}, Coord {x: i.x as f32 , y: i.y as f32}]
                     }
                 }
             )

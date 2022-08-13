@@ -1,5 +1,5 @@
 
-
+#[derive(Savefile)]
 pub struct Bubble {
     pub x: f32,
     pub y: f32,

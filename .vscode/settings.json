@@ -9,9 +9,13 @@
     },
     "cSpell.words": [
         "bood",
+        "consts",
         "crossterm",
         "Crossterm",
+        "DARKGREEN",
+        "keybinds",
         "macroquad",
+        "Savefile",
         "vect"
     ]
 }

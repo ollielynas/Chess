@@ -36,7 +36,7 @@ pub fn player_movement(player: &mut Player, user: &UserData) -> bool {
         return new_move;
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Savefile)]
 pub struct Player {
     pub x: f32,
     pub y: f32,

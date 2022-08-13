@@ -1,4 +1,4 @@
-use macroquad::prelude::*;
+use macroquad::{prelude::*};
 mod player;
 use player::*;
 mod game_data;
@@ -6,9 +6,21 @@ use game_data::*;
 mod home;
 use home::*;
 mod particles_fnc;
-use particles_fnc::*;
+// use particles_fnc::*;
 use std::path::Path;
+extern crate savefile;
+use savefile::prelude::*;
+use std::time::Instant;
+use std::env;
+mod key_map;
 
+
+
+pub const GLOBAL_VERSION:u32 = 0;
+
+
+#[macro_use]
+extern crate savefile_derive;
 
 const DEFAULT_GAME_STATE: GameData = GameData {
         player: Player {
@@ -23,49 +35,24 @@ const DEFAULT_GAME_STATE: GameData = GameData {
         enemies: vec![],
         alive: false,
         bubble_particles: vec![],
+        select_ability: SelectAbility {
+            slot: 1,
+            y_offset: 0.0,
+            open: false
+        },
+        pause: false
 };
 
-fn vect_difference(v1: &Vec<Enemy>, v2: &Vec<Enemy>) -> Vec<Enemy> {
-    v1.iter().filter(|&x| !v2.contains(x)).cloned().collect()
-}
-
-async fn load_local_texture(id: String, user: &UserData) -> Texture2D {
-    if Path::new(&format!("./src/res/{}/{}.png",user.texture, id)).exists() {
-        return load_texture(&format!("./src/res/{}/{}.png",user.texture, id)).await.unwrap();        
-    }else {
-        let default_texture = "Programmer Art";
-        return load_texture(&format!("./src/res/{}/{}.png",default_texture, id)).await.unwrap(); 
-    }
-}
-
-#[macroquad::main("Chess")]
-async fn main() {
-
-    let mut em = (screen_height() / 32.0) * 1.5;
-    let mut dsp_square = DrawTextureParams {
-        // 32x32
-        dest_size: Some(vec2(em, em)),
-        ..Default::default()
-    };
-    
 
 
-
-
-    let mut dsp_piece = DrawTextureParams {
-        // 32x42
-        dest_size: Some(vec2(em, em + 10.0 * (em / 32.0))),
-        ..Default::default()
-    };
-
-    let mut user = UserData {
+fn default_user_values() -> UserData {UserData {
         left: KeyCode::A,
         right: KeyCode::D,
         up: KeyCode::W,
         down: KeyCode::S,
         abilities: [
-            Abilities::Blip,
-            Abilities::RBlast,
+            Abilities::Null,
+            Abilities::Null,
             Abilities::Null,
             Abilities::Null,
             Abilities::Null,
@@ -77,10 +64,56 @@ async fn main() {
             KeyCode::Key4,
             KeyCode::Key5,
             ],
-        texture: "Programmer Art".to_owned()
+        texture: "Programmer Art".to_owned(),
+}}
+
+fn vect_difference(v1: &Vec<Enemy>, v2: &Vec<Enemy>) -> Vec<Enemy> {
+    v1.iter().filter(|&x| !v2.contains(x)).cloned().collect()
+}
+
+async fn load_local_texture(id: String, user: &UserData) -> Texture2D {
+    if Path::new(&format!("./src/res/{}/{}.png",user.texture, id)).exists() {
+        return load_texture(&format!("./src/res/{}/{}.png",user.texture, id)).await.unwrap();        
+    }else {
+        let default_texture = "Programmer Art".to_owned();
+        return load_texture(&format!("./src/res/{}/{}.png",default_texture, id)).await.unwrap(); 
+    }
+}
+
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "One True King".to_owned(),
+        fullscreen: true,
+        ..Default::default()
+    }
+}
+
+
+
+#[macroquad::main(window_conf)]
+async fn main() {
+
+    let mut em = (screen_height() / 32.0) * 1.5;
+    let mut dsp_square = DrawTextureParams {
+        // 32x32
+        dest_size: Some(vec2(em, em)),
+        ..Default::default()
     };
 
-    let mut game_data = DEFAULT_GAME_STATE;
+
+
+
+
+    let mut dsp_piece = DrawTextureParams {
+        // 32x42
+        dest_size: Some(vec2(em, em + 10.0 * (em / 32.0))),
+        ..Default::default()
+    };
+
+    
+    
+    let mut user: UserData = default_user_values();
+    user.load();
 
     let select: Texture2D = load_local_texture("select".to_owned(), &user).await;
     let black_square: Texture2D = load_local_texture("black_square".to_owned(), &user).await;
@@ -89,15 +122,30 @@ async fn main() {
     let red_square: Texture2D = load_local_texture("red_square".to_owned(), &user).await;
     let rook_texture: Texture2D = load_local_texture("rook".to_owned(), &user).await;
     let bishop_texture: Texture2D = load_local_texture("bishop".to_owned(), &user).await;
+    let player_texture: Texture2D = load_local_texture("player_king".to_owned(), &user).await;
     let mut size = 0.0;
 
 
 
 
+    let mut game_data: GameData = match  savefile::load_file("game_data.bin", GLOBAL_VERSION) {
+        Ok(e) => {e},
+        Err(_) => {
+            save_file("game_data.bin", GLOBAL_VERSION, &DEFAULT_GAME_STATE).unwrap();
+            println!("failed to read file");
+            DEFAULT_GAME_STATE
+        }
+    };
 
+
+
+    let mut save_timer = Instant::now();
     loop {
+        if save_timer.elapsed().as_secs() > 5 {
+            save_timer = Instant::now();
+            save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
+        }
 
-        // define variable em
         em = (screen_height() / 32.0) * 1.5;
 
         // change piece and square sizes of em has changed
@@ -108,13 +156,17 @@ async fn main() {
         
         clear_background(BLACK);
 
+        if is_key_pressed(KeyCode::Escape) {
+            game_data.pause = !game_data.pause;
+        }
+
 
         let mouse_x = mouse_position().0/em;
         let mouse_y = mouse_position().1/em;
 
         // when player dies or start new game
         if !game_data.alive {
-            display_home(em, &mut user);
+            display_home(em, &mut user, &mut game_data);
             if is_key_down(KeyCode::Enter) {
                 game_data = DEFAULT_GAME_STATE;
                 game_data.alive = true;
@@ -158,14 +210,15 @@ async fn main() {
 
 
 
-
+        if !game_data.pause {
         for i in 0..5 {
             if is_key_pressed(user.ability_key[i]) {
                 activate_ability(user.abilities[i], &mut game_data)
             }
         }
+        }
         // get user input then make move
-        if player_movement(&mut game_data.player, &user) || game_data.player.sub_round > 3 {
+        if !game_data.pause && (player_movement(&mut game_data.player, &user) || game_data.player.sub_round > 3)  {
             game_data.player.sub_round += 1;
             
             let e_1 = game_data.enemies.clone();
@@ -175,9 +228,11 @@ async fn main() {
                 game_data.player.energy += match vect_difference(&e_1, &game_data.enemies)[0].piece {
                     Piece::Pawn => 1.0,
                     Piece::Rook => 3.0,
-                    Piece::Bishop => 5.0,
+                    Piece::Bishop => 3.0,
                     _ => 5.0
                 };
+
+
 
                 if game_data.player.energy >= 20.0 {
                     game_data.player.energy = 20.0;
@@ -303,7 +358,7 @@ async fn main() {
 
 
     draw_texture_ex(
-        game_data.player.texture().await,
+        player_texture,
         game_data.player.x * em + em,
         game_data.player.y * em + em * 0.5,
         WHITE,
@@ -362,20 +417,20 @@ async fn main() {
 
         for i in 0..5 {
             let mut color = GRAY;
-            if meta_data(user.abilities[i]).cost as f32 <= game_data.player.energy {color = GREEN}
+            if metadata(user.abilities[i]).cost as f32 <= game_data.player.energy {color = GREEN}
             draw_text(&format!("{:?}", user.ability_key[i]),
             18.0*em,
             (i+7) as f32*em,
             em*0.8,
             color,
             );
-            draw_text(&format!("| {:?}", meta_data(user.abilities[i]).cost),
+            draw_text(&format!("| {:?}", metadata(user.abilities[i]).cost),
             19.5*em,
             (i+7) as f32*em,
             em*0.8,
             color,
             );
-            draw_text( &("| ".to_owned()+&meta_data(user.abilities[i]).name),
+            draw_text( &("| ".to_owned()+&metadata(user.abilities[i]).name),
             21.0*em,
             (i+7) as f32*em,
             em*0.8,
@@ -383,6 +438,24 @@ async fn main() {
             );
         }
 
+        if selected_square_x > 16.0 {
+        for i in 0..5 {
+                if mouse_y.round() as usize  == i + 7 {
+                    draw_text( &metadata(user.abilities[i]).description,
+                    em,
+                    18.0*em,
+                    em*0.8,
+                    GRAY,
+                    );
+                    draw_text( "|",
+                    17.5*em,
+                    (i + 7) as f32*em,
+                    em*0.8,
+                    GRAY,
+                    );
+                }
+            }
+        }
 
 
         for i in &game_data.enemies {
@@ -451,7 +524,40 @@ async fn main() {
             }
         }
 
+        if game_data.pause {
+            draw_rectangle(
+                0.0,
+                0.0,
+                screen_width(),
+                screen_height(),
+                Color {r:0.0,g:0.0,b:0.0,a:0.9}
+            );
+            draw_text (
+                "paused",
+                screen_width()/2.0 - 5.0*em,
+                screen_height()/3.0,
+                em*3.0,
+                GRAY
+            );
+            draw_text (
+                "Quit",
+                15.0*em,
+                screen_height()/2.0,
+                em*2.0,
+                RED
+            );
+            if is_mouse_button_pressed(MouseButton::Left) {
+                println!("{} {}", mouse_x, mouse_y);
+                if mouse_x > 15.0 && mouse_x < 18.3 && mouse_y > 9.7 && mouse_y < 10.6{
+                    save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
 
+                    if env::consts::OS == "linux" {
+                        std::process::exit(0x0100);
+                    }
+                    std::process::exit(0);
+                }
+            }
+        }
 
         size = em;
         next_frame().await

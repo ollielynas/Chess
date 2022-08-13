@@ -9,3 +9,7 @@ edition = "2021"
 macroquad = "0.3"
 rand = "0.8.5"
 macroquad-particles = "0.1.1"
+savefile="0.10"
+savefile-derive="0.10"
+
+
