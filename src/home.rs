@@ -213,6 +213,9 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData) {
 }
 
 fn select_ability(data: &mut GameData, user: &mut UserData, em:f32) {
+    if is_key_pressed(KeyCode::Escape) {
+        data.select_ability.open = false;
+    }
     draw_rectangle(31.0*em, 31.0*em, em, em, Color {r:0.8, g:0.8, b:0.8, a:1.0})
 }
 
@@ -220,6 +223,7 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
 
     if data.select_ability.open {
         select_ability(data, user, em);
+        return
     }
 
     draw_text(

@@ -1,6 +1,4 @@
 use macroquad::{prelude::*};
-use std::time::Instant;
-use crate::game_data::*;
 use crate::home::*;
 
 pub fn player_movement(player: &mut Player, user: &UserData) -> bool {
@@ -47,10 +45,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub async fn texture(&self) -> Texture2D {
-    return load_texture("./src/res/player_king.PNG").await.unwrap()
-    }
-    
+
     pub fn update_pos(&mut self) {
         const SPEED: f32 = 0.5;
         if self.target_x > self.x {
