@@ -82,7 +82,7 @@ async fn load_local_texture(id: String, user: &UserData) -> Texture2D {
 
 fn window_conf() -> Conf {
     Conf {
-        window_title: "One True King".to_owned(),
+        window_title: "Bare King".to_owned(),
         fullscreen: true,
         ..Default::default()
     }
@@ -149,18 +149,14 @@ async fn main() {
         em = (screen_height() / 32.0) * 1.5;
 
         // change piece and square sizes of em has changed
-        if size != em {
-            dsp_square.dest_size = Some(vec2(em, em));
-            dsp_piece.dest_size = Some(vec2(em, em + em / 3.2));
-        }
         
         clear_background(BLACK);
-
+        
         if is_key_pressed(KeyCode::Escape) {
             game_data.pause = !game_data.pause;
         }
-
-
+        
+        
         let mouse_x = mouse_position().0/em;
         let mouse_y = mouse_position().1/em;
 
@@ -173,41 +169,45 @@ async fn main() {
             }
             next_frame().await;
         }else { // chose to display home or game
-
-        let selected_square_x = (mouse_x -1.5).round();
-        let selected_square_y = (mouse_y -1.5).round();
-
-        // draw board
-        for i in 0..16 {
-            for j in 0..16 {
-                // pick between black and white
-                let mut tex = black_square;
-                if (i + j) % 2 == 0 {
-                } else {
-                    tex = white_square;
-                }
-                // draw square
-                draw_texture_ex(
-                    tex,
-                    i as f32 * em + em,
-                    j as f32 * em + em,
-                    WHITE,
-                    dsp_square.clone(),
-                );
-
-                if j as f32 == game_data.player.target_y && i as f32 == game_data.player.target_x {
+            
+            let selected_square_x = (mouse_x -1.5).round();
+            let selected_square_y = (mouse_y -1.5).round();
+            
+            // draw board
+            for i in 0..16 {
+                for j in 0..16 {
+                    // pick between black and white
+                    let mut tex = black_square;
+                    if (i + j) % 2 == 0 {
+                    } else {
+                        tex = white_square;
+                    }
+                    // draw square
                     draw_texture_ex(
-                        select,
+                        tex,
                         i as f32 * em + em,
                         j as f32 * em + em,
                         WHITE,
                         dsp_square.clone(),
                     );
+                    
+                    if j as f32 == game_data.player.target_y && i as f32 == game_data.player.target_x {
+                        draw_texture_ex(
+                            select,
+                            i as f32 * em + em,
+                            j as f32 * em + em,
+                            WHITE,
+                            dsp_square.clone(),
+                        );
                 }
             }
         }
 
 
+        if size != em {
+            dsp_square.dest_size = Some(vec2(em, em));
+            dsp_piece.dest_size = Some(vec2(em, em + em / 3.2));
+        }
 
 
         if !game_data.pause {
@@ -570,7 +570,7 @@ async fn main() {
             }
         }
 
-        size = em;
+        size = em.clone();
         next_frame().await
     }}
 }

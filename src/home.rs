@@ -7,6 +7,8 @@ use crate::key_map::*;
 use savefile::prelude::*;
 use strum::IntoEnumIterator; // 0.17.1
 use strum_macros::EnumIter; // 0.17.1
+use std::env;
+
 
 fn key_as_string(key: KeyCode) -> String {
     return format!("{:?}", key);
@@ -222,10 +224,18 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em:f32) {
     let mouse_x = mouse_position().0/em;
 
     for i in 1..o.len() {
-        draw_text(&format!("Name: {}", metadata(o[i]).name),2.0*em, (((i-1)*2) as f32*em + 3.0*em)*1.5,  em, GRAY);
+        draw_text(&format!("{}", metadata(o[i]).name),2.0*em, (((i-1)*2) as f32*em + 3.0*em)*1.5,  em*1.2, GRAY);
         draw_text(&format!("Cost: {}", metadata(o[i]).cost),20.0*em, (((i-1)*2) as f32*em + 3.0*em)*1.5,  em, GRAY);
         draw_text(&format!("{}", metadata(o[i]).description),2.0*em, (((i-1)*2) as f32*em + 3.8*em)*1.5,  em, GRAY);
-        if 
+        if mouse_y > i as f32 *2.7 + 1.0 &&  mouse_y < (i+1)as f32*2.7  + 1.0 {
+        draw_text(&format!("{}", metadata(o[i]).name),2.0*em, (((i-1)*2) as f32*em + 3.0*em)*1.5,  em*1.2, LIGHTGRAY);
+        draw_text(&format!("Cost: {}", metadata(o[i]).cost),20.0*em, (((i-1)*2) as f32*em + 3.0*em)*1.5,  em, LIGHTGRAY);
+        draw_text(&format!("{}", metadata(o[i]).description),2.0*em, (((i-1)*2) as f32*em + 3.8*em)*1.5,  em, LIGHTGRAY);
+        if is_mouse_button_pressed(MouseButton::Left) {
+            user.abilities[data.select_ability.slot] = o[i];
+            data.select_ability.open = false;
+        }
+        }
     }
 }
 
@@ -245,12 +255,46 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
     );
 
     draw_text(
-        "One True King",
+        "Bare King",
         1.0 * em,
         3.0 * em,
-        8.0 + em * 1.5,
+    em * 3.0,
         DARKGREEN,
     );
+    
+    let mouse_y = mouse_position().1/em;
+    let mouse_x = mouse_position().0/em;
+
+    draw_text(
+        "keybinds",
+        em*2.0,
+        15.0*em,
+        em,
+        LIGHTGRAY
+    );
+    draw_text(
+        "textures",
+        em*2.0,
+        16.5*em,
+        em,
+        LIGHTGRAY
+    );
+    draw_text(
+        "Quit",
+        em*2.0,
+        18.0*em,
+        em,
+        RED
+    );
+
+    if is_mouse_button_pressed(MouseButton::Left) {
+        if mouse_y > 17.0 && mouse_y < 18.0 && mouse_x > 2.0 && mouse_x < 3.2 {
+            if env::consts::OS == "linux" {
+                std::process::exit(0x0100);
+            }
+            std::process::exit(0);        
+        }
+    }
 
     for i in 0..5 {
         draw_text(
@@ -264,11 +308,10 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
             "Pick New",
             screen_width() / 2.0,
             (6.5 + i as f32) * em,
-            4.0 + em,
+            em,
             ORANGE,
         );
 
-        let mouse_y = mouse_position().1/em;
 
         if is_mouse_button_pressed(MouseButton::Left) {
             if mouse_y > 5.5 + i as f32 
@@ -276,6 +319,7 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
             && mouse_position().0 > screen_width() / 2.0
             && mouse_position().0 < (screen_width() / 2.0) + 3.2*em {
                 data.select_ability.open = true;
+                data.select_ability.slot = i;
             }
         }
     }
