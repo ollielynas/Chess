@@ -253,5 +253,16 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
             4.0 + em,
             ORANGE,
         );
+
+        let mouse_y = mouse_position().1/em;
+
+        if is_mouse_button_pressed(MouseButton::Left) {
+            if mouse_y > 5.5 + i as f32 
+            && mouse_y < 6.5 + i as f32 
+            && mouse_position().0 > screen_width() / 2.0
+            && mouse_position().0 < (screen_width() / 2.0) + 3.2*em {
+                data.select_ability.open = true;
+            }
+        }
     }
 }
