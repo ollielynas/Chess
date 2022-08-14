@@ -6,7 +6,6 @@ use game_data::*;
 mod home;
 use home::*;
 mod particles_fnc;
-// use particles_fnc::*;
 use std::path::Path;
 extern crate savefile;
 use savefile::prelude::*;
@@ -16,7 +15,7 @@ mod key_map;
 
 
 
-pub const GLOBAL_VERSION:u32 = 0;
+pub const GLOBAL_VERSION:u32 = 1;
 
 
 #[macro_use]
@@ -37,8 +36,8 @@ const DEFAULT_GAME_STATE: GameData = GameData {
         bubble_particles: vec![],
         select_ability: SelectAbility {
             slot: 1,
-            y_offset: 0.0,
-            open: false
+            open: false,
+            page: 0,
         },
         pause: false
 };
@@ -557,7 +556,7 @@ async fn main() {
                 println!("{} {}", mouse_x, mouse_y);
                 if mouse_x > 15.0 && mouse_x < 18.3 && mouse_y > 9.7 && mouse_y < 10.6{
                     save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
-
+                    user.save();
                     if env::consts::OS == "linux" {
                         std::process::exit(0x0100);
                     }

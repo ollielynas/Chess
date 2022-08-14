@@ -96,13 +96,15 @@ impl UserData {
         });
 
         let other:OtherUserData;
-        match savefile::load_file("keybinds.bin", GLOBAL_VERSION) {
+        match savefile::load_file("user_data.bin", GLOBAL_VERSION) {
                 Ok(e) => {
                     other = e;
                     self.abilities = other.abilities;
+                    
                     self.texture = other.texture;
                 },
-                Err(_) => {
+                Err(e) => {
+                    println!("Error: {}", e);
                     self.save();
                 }
             }
@@ -218,7 +220,16 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em:f32) {
     if is_key_pressed(KeyCode::Escape) {
         data.select_ability.open = false;
     }
-    let o: Vec<Abilities> = Abilities::iter().collect();
+
+    let mut o: Vec<Abilities> = Abilities::iter().collect();
+    if data.select_ability.page*5 > o.len() || data.select_ability.page < 0 {
+        data.select_ability.page = (o.len() as f32/8.0).floor() as usize;
+    }
+
+    for _ in 0..data.select_ability.page*5 {
+        o.remove(0);
+    }
+
     draw_text("Abilities",2.0*em, 2.0*em as f32,  em*1.6, DARKGRAY);
     let mouse_y = mouse_position().1/em;
     let mouse_x = mouse_position().0/em;
@@ -234,6 +245,7 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em:f32) {
         if is_mouse_button_pressed(MouseButton::Left) {
             user.abilities[data.select_ability.slot] = o[i];
             data.select_ability.open = false;
+            user.save();
         }
         }
     }

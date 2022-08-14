@@ -33,8 +33,18 @@ pub struct Enemy {
 #[derive(Savefile)]
 pub struct SelectAbility {
     pub slot: usize,
-    pub y_offset: f32,
-    pub open: bool
+    pub open: bool,
+    pub page: usize,
+}
+
+impl Default for SelectAbility {
+    fn default() -> SelectAbility {
+        SelectAbility {
+            slot: 0,
+            open: false,
+            page: 0,
+        }
+    }
 }
 
 #[derive(Savefile)]
@@ -44,7 +54,9 @@ pub struct GameData {
     pub enemies: Vec<Enemy>,
     pub alive: bool,
     pub bubble_particles: Vec<Bubble>,
+    #[savefile_ignore]
     pub select_ability: SelectAbility,
+    #[savefile_ignore]
     pub pause: bool,
 }
 
