@@ -8,6 +8,7 @@ use savefile::prelude::*;
 use strum::IntoEnumIterator; // 0.17.1
 use strum_macros::EnumIter; // 0.17.1
 use std::env;
+use crate::ability::*;
 
 
 fn key_as_string(key: KeyCode) -> String {
@@ -116,113 +117,13 @@ impl UserData {
 
 
 
-#[derive(Debug, Copy, Clone, PartialEq, Savefile, EnumIter)]
-pub enum Abilities {
-    Null,
-    RBlast,
-    Blip,
-}
-
-const FIRE_COLORS: [[f32; 4]; 5] = [
-    [79.0, 79.0, 79.0, 255.0],
-    [11.0, 11.0, 11.0, 255.0],
-    [191.0, 58.0, 58.0, 255.0],
-    [225.0, 144.0, 61.0, 255.0],
-    [216.0, 194.0, 63.0, 255.0],
-];
-
-#[derive(Debug, Clone, PartialEq, Savefile)]
-pub struct AbilityMetadata {
-    pub name: String,
-    pub description: String,
-    pub cost: i32,
-}
-
-pub fn metadata(a: Abilities) -> AbilityMetadata {
-    return match a {
-        Abilities::Blip => AbilityMetadata {
-            name: "blip".to_owned(),
-            description: "gain 5 energy. spawn 5 new pieces. counts as a move".to_owned(),
-            cost: -5,
-        },
-        Abilities::RBlast => AbilityMetadata {
-            name: "radial blast".to_owned(),
-            description: "kills everything in a circle around the player".to_owned(),
-            cost: 10,
-        },
-        _ => AbilityMetadata {
-            name: "no ability selected".to_owned(),
-            description: "no ability has been selected".to_owned(),
-            cost: 99,
-        },
-    };
-}
-
-pub fn activate_ability(ability: Abilities, data: &mut GameData) {
-    if data.player.energy >= metadata(ability).cost as f32 {
-        data.player.energy -= metadata(ability).cost as f32
-    } else {
-        return;
-    };
-
-    match ability {
-        Abilities::Blip => {
-            for _ in 0..5 {
-                data.spawn_enemy();
-                if data.player.energy > 20.0 {
-                    data.player.energy = 20.0;
-                }
-            }
-            data.round += 3;
-            data.player.sub_round += 3;
-        }
-        Abilities::RBlast => {
-            let mut blast_area: Vec<Coord> = vec![];
-            for i in -2..=2 {
-                for j in -2..=2 {
-                    if !([-2, 2].contains(&i) && [-2, 2].contains(&j)) && (j, i) != (0, 0) {
-                        blast_area.push(Coord {
-                            x: data.player.x + i as f32,
-                            y: data.player.y + j as f32,
-                        });
-                        for _ in 0..5 {
-                            let l = thread_rng().gen_range(10..30);
-                            let r = thread_rng().gen_range(10..30);
-                            data.bubble_particles.push(Bubble {
-                                x: data.player.x
-                                    + i as f32
-                                    + 1.5
-                                    + thread_rng().gen_range(-10..10) as f32 / 100.0,
-                                y: data.player.y
-                                    + j as f32
-                                    + 1.5
-                                    + thread_rng().gen_range(-10..10) as f32 / 100.0,
-                                color: FIRE_COLORS[thread_rng().gen_range(0..5)],
-                                r: r as f32 / 100.0,
-                                decay: (r as f32 / l as f32) / 100.0,
-                                x_velocity: thread_rng().gen_range(-15..15) as f32 / 5000.0,
-                                y_velocity: thread_rng().gen_range(-15..0) as f32 / 500.0,
-                                lifetime: l as f32,
-                            });
-                        }
-                    }
-                }
-            }
-
-            data.enemies
-                .retain(|f| !blast_area.contains(&Coord { x: f.x, y: f.y }))
-        }
-        _ => (),
-    }
-}
-
 fn select_ability(data: &mut GameData, user: &mut UserData, em:f32) {
     if is_key_pressed(KeyCode::Escape) {
         data.select_ability.open = false;
     }
 
     let mut o: Vec<Abilities> = Abilities::iter().collect();
-    if data.select_ability.page*5 > o.len() || data.select_ability.page < 0 {
+    if data.select_ability.page*5 > o.len() {
         data.select_ability.page = (o.len() as f32/8.0).floor() as usize;
     }
 
@@ -231,8 +132,29 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em:f32) {
     }
 
     draw_text("Abilities",2.0*em, 2.0*em as f32,  em*1.6, DARKGRAY);
+    draw_text(&format!("  {}/{}", data.select_ability.page + 1,  (o.len() as f32/8.0).floor() as usize + 1) 
+    ,2.0*em, 20.5*em as f32,  em, DARKGRAY);
+
     let mouse_y = mouse_position().1/em;
     let mouse_x = mouse_position().0/em;
+
+    // nav arrows
+    if mouse_x > 2.0 && mouse_x < 3.0 && mouse_y > 19.5 && mouse_y < 20.5 {
+        draw_text("<", 2.0*em, 20.5*em, em, LIGHTGRAY);
+        if is_mouse_button_pressed(MouseButton::Left) {
+            data.select_ability.page -= 1;
+        }
+    }else {
+        draw_text("<", 2.0*em, 20.5*em, em, GRAY);
+    }
+    if mouse_x > 5.0 && mouse_x < 6.0 && mouse_y > 19.5 && mouse_y < 20.5{
+        draw_text(">", 5.0*em, 20.5*em, em, LIGHTGRAY);
+                if is_mouse_button_pressed(MouseButton::Left) {
+            data.select_ability.page += 1;
+        }
+    }else {
+        draw_text(">", 5.0*em, 20.5*em, em, GRAY);
+    }
 
     for i in 1..o.len() {
         draw_text(&format!("{}", metadata(o[i]).name),2.0*em, (((i-1)*2) as f32*em + 3.0*em)*1.5,  em*1.2, GRAY);

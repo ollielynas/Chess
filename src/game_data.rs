@@ -2,7 +2,8 @@ use crate::player::*;
 use macroquad::{prelude::*};
 use ::rand::prelude::*;
 use crate::particles_fnc::*;
-
+use crate::home::*;
+use crate::ability::*;
 extern crate savefile;
 
 
@@ -48,6 +49,26 @@ impl Default for SelectAbility {
 }
 
 #[derive(Savefile)]
+pub struct SelectSquare {
+    pub point: Coord,
+    pub select_mode: bool,
+    pub read: bool,
+    pub ability: Abilities
+
+}
+
+impl Default for SelectSquare {
+    fn default() -> SelectSquare {
+        SelectSquare {
+        point: Coord {x:0.0, y:0.0},
+        read: false,
+        select_mode: false,
+        ability: Abilities::Null
+        }
+    }
+}
+
+#[derive(Savefile)]
 pub struct GameData {
     pub player: Player,
     pub round: u64,
@@ -58,6 +79,8 @@ pub struct GameData {
     pub select_ability: SelectAbility,
     #[savefile_ignore]
     pub pause: bool,
+    #[savefile_ignore]
+    pub select_square: SelectSquare,
 }
 
 
@@ -110,45 +133,65 @@ impl GameData {
             let y_dist = self.player.target_y - i.y as f32;
 
             fn bishop_intersect(player: Coord, bishop: Coord) -> Vec<Coord> {
-                let mut player_line_2:Vec<Coord> = vec![];
-                let mut player_line_1:Vec<Coord> = vec![];
-                let mut bishop_line_1:Vec<Coord> = vec![];
-                let mut  bishop_line_2:Vec<Coord> = vec![];
+                // let mut player_line_2:Vec<Coord> = vec![];
+                // let mut player_line_1:Vec<Coord> = vec![];
+                // let mut bishop_line_1:Vec<Coord> = vec![];
+                // let mut  bishop_line_2:Vec<Coord> = vec![];
 
-                for e in -16..16 {
-                    if player.x + e as f32 >= 0.0
-                    && player.y + e as f32 >= 0.0
-                    && player.x + e as f32 <=15.0
-                    && player.y + e as f32 <= 15.0
-                        {
-                            player_line_1.push(Coord {x:player.x +e as f32, y:player.y + e as f32});
-                        };
-                    if player.x - e as f32 >= 0.0
-                    && player.y + e as f32 >= 0.0
-                    && player.x - e as f32 <=15.0
-                    && player.y + e as f32 <= 15.0
-                        {
-                            player_line_2.push(Coord {x:player.x -e as f32, y:player.y + e as f32});
-                        };
-                    if bishop.x - e as f32 >= 0.0
-                    && bishop.y + e as f32 >= 0.0
-                    && bishop.x - e as f32 <=15.0
-                    && bishop.y + e as f32 <= 15.0
-                        {
-                            player_line_2.push(Coord {x:bishop.x -e as f32, y:bishop.y + e as f32});
-                        };
-                    if bishop.x + e as f32 >= 0.0
-                    && bishop.y + e as f32 >= 0.0
-                    && bishop.x + e as f32 <=15.0
-                    && bishop.y + e as f32 <= 15.0
-                        {
-                            player_line_2.push(Coord {x:bishop.x +e as f32, y:bishop.y + e as f32});
-                        };
-                }
+                // for e in -16..16 {
+                //     if player.x + e as f32 >= 0.0
+                //     && player.y + e as f32 >= 0.0
+                //     && player.x + e as f32 <=15.0
+                //     && player.y + e as f32 <= 15.0
+                //         {
+                //             player_line_1.push(Coord {x:player.x +e as f32, y:player.y + e as f32});
+                //         };
+                //     if player.x - e as f32 >= 0.0
+                //     && player.y + e as f32 >= 0.0
+                //     && player.x - e as f32 <=15.0
+                //     && player.y + e as f32 <= 15.0
+                //         {
+                //             player_line_2.push(Coord {x:player.x -e as f32, y:player.y + e as f32});
+                //         };
+                //     if bishop.x - e as f32 >= 0.0
+                //     && bishop.y + e as f32 >= 0.0
+                //     && bishop.x - e as f32 <=15.0
+                //     && bishop.y + e as f32 <= 15.0
+                //         {
+                //             bishop_line_1.push(Coord {x:bishop.x -e as f32, y:bishop.y + e as f32});
+                //         };
+                //     if bishop.x + e as f32 >= 0.0
+                //     && bishop.y + e as f32 >= 0.0
+                //     && bishop.x + e as f32 <=15.0
+                //     && bishop.y + e as f32 <= 15.0
+                //         {
+                //             bishop_line_2.push(Coord {x:bishop.x +e as f32, y:bishop.y + e as f32});
+                //         };
+                // }
+
+                // let mut overlapping_lines: [Vec<Coord>; 2] = [vec![], vec![]];
+
+                // for j in &player_line_1 {
+                //     if bishop_line_2.contains(&j) {
+                //         overlapping_lines = [player_line_1.clone(), bishop_line_2.clone()];
+                //     }
+                //     if bishop_line_1.contains(&j) {
+                //         overlapping_lines = [player_line_1.clone(), bishop_line_1.clone()];
+                //     }
+                // }
+                // for j in &player_line_2 {
+                //     if bishop_line_2.contains(&j) {
+                //         overlapping_lines = [player_line_2.clone(), bishop_line_2.clone()];
+                //     }
+                //     if bishop_line_1.contains(&j) {
+                //         overlapping_lines = [player_line_2.clone(), bishop_line_1.clone()];
+                //     }
+                // }
 
 
+                // return overlapping_lines[1].clone();
+                return vec![Coord {x:bishop.x, y:bishop.y}]
 
-                return vec![]
             }
 
             i.moves = match i.piece {
@@ -255,7 +298,6 @@ impl GameData {
                 Coord {x:spawn_coords.0 as f32, y: spawn_coords.1 as f32}
                 ]
         });
-        
     }
 }
 

@@ -12,7 +12,8 @@ use savefile::prelude::*;
 use std::time::Instant;
 use std::env;
 mod key_map;
-
+mod ability;
+use ability::*;
 
 
 pub const GLOBAL_VERSION:u32 = 1;
@@ -39,7 +40,13 @@ const DEFAULT_GAME_STATE: GameData = GameData {
             open: false,
             page: 0,
         },
-        pause: false
+        pause: false,
+        select_square: SelectSquare {
+            point: Coord {x:0.0, y:0.0},
+            read: false,
+            select_mode: false,
+            ability: Abilities::Null,
+        }
 };
 
 
@@ -63,7 +70,7 @@ fn default_user_values() -> UserData {UserData {
             KeyCode::Key4,
             KeyCode::Key5,
             ],
-        texture: "Programmer Art".to_owned(),
+        texture: "fonky-monky".to_owned(),
 }}
 
 fn vect_difference(v1: &Vec<Enemy>, v2: &Vec<Enemy>) -> Vec<Enemy> {
@@ -140,6 +147,8 @@ async fn main() {
 
     let mut save_timer = Instant::now();
     loop {
+
+
         if save_timer.elapsed().as_secs() > 5 {
             save_timer = Instant::now();
             save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
@@ -154,6 +163,8 @@ async fn main() {
         if is_key_pressed(KeyCode::Escape) {
             game_data.pause = !game_data.pause;
         }
+
+        let selecting = game_data.select_square.select_mode;
         
         
         let mouse_x = mouse_position().0/em;
@@ -190,15 +201,15 @@ async fn main() {
                         dsp_square.clone(),
                     );
                     
-                    if j as f32 == game_data.player.target_y && i as f32 == game_data.player.target_x {
-                        draw_texture_ex(
-                            select,
-                            i as f32 * em + em,
-                            j as f32 * em + em,
-                            WHITE,
-                            dsp_square.clone(),
-                        );
-                }
+                //     if j as f32 == game_data.player.target_y && i as f32 == game_data.player.target_x {
+                //         draw_texture_ex(
+                //             select,
+                //             i as f32 * em + em,
+                //             j as f32 * em + em,
+                //             WHITE,
+                //             dsp_square.clone(),
+                //         );
+                // }
             }
         }
 
@@ -209,7 +220,7 @@ async fn main() {
         }
 
 
-        if !game_data.pause {
+        if !game_data.pause && !selecting {
         for i in 0..5 {
             if is_key_pressed(user.ability_key[i]) {
                 activate_ability(user.abilities[i], &mut game_data)
@@ -217,7 +228,7 @@ async fn main() {
         }
         }
         // get user input then make move
-        if !game_data.pause && (player_movement(&mut game_data.player, &user) || game_data.player.sub_round > 3)  {
+        if !game_data.pause && !selecting && (player_movement(&mut game_data.player, &user) || game_data.player.sub_round > 3)  {
             game_data.player.sub_round += 1;
             
             let e_1 = game_data.enemies.clone();
@@ -567,6 +578,29 @@ async fn main() {
                     game_data.alive = false;
                 }
             }
+        }
+
+        // select a square
+        if game_data.select_square.select_mode {
+            draw_texture_ex(
+                select,
+                selected_square_x * em + em,
+                selected_square_y * em + em,
+                WHITE,
+                dsp_square.clone(),
+            );
+        if is_mouse_button_pressed(MouseButton::Left) 
+        && selected_square_x >= 0.0 
+        && selected_square_x <= 15.0
+        && selected_square_y >= 0.0
+        && selected_square_y <= 15.0
+        {
+            targeted_ability(
+                &mut game_data, 
+                Coord {x: selected_square_x as f32, y: selected_square_y as f32} , em
+            );
+            game_data.select_square = SelectSquare {..Default::default()};
+        }
         }
 
         size = em.clone();
