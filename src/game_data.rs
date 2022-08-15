@@ -109,6 +109,47 @@ impl GameData {
             let x_dist = self.player.target_x - i.x as f32;
             let y_dist = self.player.target_y - i.y as f32;
 
+            fn bishop_intersect(player: Coord, bishop: Coord) -> Vec<Coord> {
+                let mut player_line_2:Vec<Coord> = vec![];
+                let mut player_line_1:Vec<Coord> = vec![];
+                let mut bishop_line_1:Vec<Coord> = vec![];
+                let mut  bishop_line_2:Vec<Coord> = vec![];
+
+                for e in -16..16 {
+                    if player.x + e as f32 >= 0.0
+                    && player.y + e as f32 >= 0.0
+                    && player.x + e as f32 <=15.0
+                    && player.y + e as f32 <= 15.0
+                        {
+                            player_line_1.push(Coord {x:player.x +e as f32, y:player.y + e as f32});
+                        };
+                    if player.x - e as f32 >= 0.0
+                    && player.y + e as f32 >= 0.0
+                    && player.x - e as f32 <=15.0
+                    && player.y + e as f32 <= 15.0
+                        {
+                            player_line_2.push(Coord {x:player.x -e as f32, y:player.y + e as f32});
+                        };
+                    if bishop.x - e as f32 >= 0.0
+                    && bishop.y + e as f32 >= 0.0
+                    && bishop.x - e as f32 <=15.0
+                    && bishop.y + e as f32 <= 15.0
+                        {
+                            player_line_2.push(Coord {x:bishop.x -e as f32, y:bishop.y + e as f32});
+                        };
+                    if bishop.x + e as f32 >= 0.0
+                    && bishop.y + e as f32 >= 0.0
+                    && bishop.x + e as f32 <=15.0
+                    && bishop.y + e as f32 <= 15.0
+                        {
+                            player_line_2.push(Coord {x:bishop.x +e as f32, y:bishop.y + e as f32});
+                        };
+                }
+
+
+
+                return vec![]
+            }
 
             i.moves = match i.piece {
                 // the move list should include the tile the piece is standing on
@@ -169,11 +210,9 @@ impl GameData {
                         }
                     }
                 }else{
-                    if x_dist.abs() + y_dist.abs() < 8.0 {
-                            (0..thread_rng().gen_range(1..8)).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 + e as f32}).collect()
-                    }else{
-                        vec![Coord {x: i.x as f32 , y: i.y as f32}, Coord {x: i.x as f32 , y: i.y as f32}]
-                    }
+                    bishop_intersect(Coord {x: self.player.target_x, y:self.player.target_y}, 
+                        Coord {x:i.x, y:i.y}
+                    )
                 }
             )
             ,
