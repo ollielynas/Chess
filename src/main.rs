@@ -269,8 +269,8 @@ async fn main() {
 
 
 
-                if game_data.player.energy >= 20.0 {
-                    game_data.player.energy = 20.0;
+                if game_data.player.energy >= 30.0 {
+                    game_data.player.energy = 30.0;
                 }
             }
             
@@ -419,8 +419,8 @@ async fn main() {
             GOLD,
         );
 
-        if game_data.player.energy > 20.0 {game_data.player.energy = 20.0};
-        let bar = "[".to_owned() + &"I".repeat(game_data.player.energy as usize) + &" ".repeat(20-game_data.player.energy as usize) + "]";
+        if game_data.player.energy > 30.0 {game_data.player.energy = 30.0};
+        let bar = "[".to_owned() + &"I".repeat(game_data.player.energy as usize) + &" ".repeat(30-game_data.player.energy as usize) + "]";
         draw_text(
             &format!(
                 "{}",
@@ -463,24 +463,27 @@ async fn main() {
         RED
         );
 
+        draw_text("Abilities",em * 18.5,7.6 * em,em,
+        GRAY
+        );
         for i in 0..5 {
             let mut color = GRAY;
             if metadata(user.abilities[i]).cost as f32 <= game_data.player.energy {color = GREEN}
             draw_text(&format!("{:?}", user.ability_key[i]),
             18.0*em,
-            (i+7) as f32*em,
+            (i+9) as f32*em,
             em*0.8,
             color,
             );
             draw_text(&format!("| {:?}", metadata(user.abilities[i]).cost),
             19.5*em,
-            (i+7) as f32*em,
+            (i+9) as f32*em,
             em*0.8,
             color,
             );
             draw_text( &("| ".to_owned()+&metadata(user.abilities[i]).name),
             21.0*em,
-            (i+7) as f32*em,
+            (i+9) as f32*em,
             em*0.8,
             color,
             );
@@ -488,7 +491,7 @@ async fn main() {
 
         if selected_square_x > 16.0 {
         for i in 0..5 {
-                if mouse_y.round() as usize  == i + 7 {
+                if mouse_y.round() as usize  == i + 9 {
                     draw_text( &metadata(user.abilities[i]).description,
                     em,
                     18.0*em,
@@ -497,7 +500,7 @@ async fn main() {
                     );
                     draw_text( "|",
                     17.5*em,
-                    (i + 7) as f32*em,
+                    (i + 9) as f32*em,
                     em*0.8,
                     GRAY,
                     );
