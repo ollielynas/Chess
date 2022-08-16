@@ -86,6 +86,10 @@ pub struct GameData {
 
 impl GameData {
 
+    pub fn difficulty(&self) -> f32 {
+        return (self.round as f32/3.141569).sin() + (self.round as f32/40.0)
+    }
+
     pub fn enemy_move(&mut self) {
         if self.enemies.len() < 1 {
             println!("no enemies");
@@ -220,6 +224,38 @@ impl GameData {
                 }
             )
             ,
+            Piece::Queen => (
+                if y_dist.abs() == x_dist.abs() {
+                    if x_dist < 0.0 {
+                        if y_dist < 0.0 {
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(2..8)).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 - e as f32}).collect()
+                        }else {
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(2..8)).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 + e as f32}).collect()
+                        }
+                    }else {
+                        if y_dist < 0.0 {
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(2..8)).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 - e as f32}).collect()
+                        }else {
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(2..8)).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 + e as f32}).collect()
+                        }
+                    }
+                }else{
+                if (x_dist).abs() > y_dist.abs() {
+                    if x_dist < 0.0 {
+                        (0..x_dist.abs() as usize +1).map(|e| Coord {x: i.x as f32 -e as f32, y: i.y as f32}).collect()
+
+                    }else {
+                        (0..x_dist.abs() as usize +1).map(|e| Coord {x: i.x as f32 +e as f32, y: i.y as f32}).collect()
+                    }
+                }else {
+                    if y_dist < 0.0 {
+                        (0..y_dist.abs() as usize +1).map(|e| Coord {x: i.x as f32 , y: i.y as f32 -e as f32}).collect()
+                    }else {
+                        (0..y_dist.abs() as usize +1).map(|e| Coord {x: i.x as f32 , y: i.y as f32 +e as f32}).collect()
+                    }
+                }
+                }
+            ),
 // ||------------------------------ Everything else AI ----------------------||
             _ => vec![Coord {x: i.x as f32 , y: i.y as f32}]
         };
@@ -252,7 +288,8 @@ impl GameData {
 
     }
     pub fn spawn_enemy(&mut self) {
-
+        println!("{}", self.difficulty().ceil() as usize);
+        for _ in 0..self.difficulty().ceil() as usize {
         let data = thread_rng().gen_range(0..15);
         let chance = thread_rng().gen_range(0..4);
         let spawn_coords = match chance {
@@ -261,7 +298,6 @@ impl GameData {
             2 => (data, 0),
             _ => (data, 15),
         };
-
         let mut piece_type = Piece::Pawn;
         if self.round > 10 && thread_rng().gen_bool(0.25) {
             piece_type = Piece::Rook;
@@ -275,7 +311,7 @@ impl GameData {
         if self.round > 100 && thread_rng().gen_bool(0.15) {
             piece_type = Piece::Queen;
         }
-
+        
         self.enemies.push(Enemy {
             x: -20.0*(8-spawn_coords.0) as f32,
             y: -20.0*(8-spawn_coords.1) as f32,
@@ -285,8 +321,9 @@ impl GameData {
                 Coord {x: -20.0*(8-spawn_coords.0) as f32, y:-20.0*(8-spawn_coords.1) as f32},
                 Coord {x:spawn_coords.0 as f32, y: spawn_coords.1 as f32}
                 ]
-        });
-    }
+            });
+        }
+        }
 }
 
 

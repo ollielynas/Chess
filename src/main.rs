@@ -130,7 +130,7 @@ async fn main() {
     let bishop_texture: Texture2D = load_local_texture("bishop".to_owned(), &user).await;
     let player_texture: Texture2D = load_local_texture("player_king".to_owned(), &user).await;
     let knight_texture: Texture2D = load_local_texture("knight".to_owned(), &user).await;
-
+    let queen_texture: Texture2D = load_local_texture("queen".to_owned(), &user).await;
     let mut size = 0.0;
 
 
@@ -356,7 +356,7 @@ async fn main() {
                 Piece::Rook => rook_texture,
                 Piece::Bishop => bishop_texture,
                 Piece::Knight => knight_texture,
-
+                Piece::Queen => queen_texture,
                 _ => pawn_texture
             },
             i.x * em + em,
@@ -393,6 +393,7 @@ async fn main() {
             em * 0.8,
             GREEN,
         );
+        if game_data.player.energy > 20.0 {game_data.player.energy = 20.0};
         let bar = "[".to_owned() + &"I".repeat(game_data.player.energy as usize) + &" ".repeat(20-game_data.player.energy as usize) + "]";
         draw_text(
             &format!(
