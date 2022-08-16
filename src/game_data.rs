@@ -189,17 +189,17 @@ impl GameData {
             Piece::Knight => (
                 if (x_dist).abs() > y_dist.abs() {
                     if x_dist < 0.0 {
-                        (0..=3).map(|e| Coord {x: i.x as f32 -e as f32, y: i.y as f32}).collect()
+                        (0..3).map(|e| Coord {x: i.x as f32 -e as f32, y: i.y as f32}).collect()
 
                     }else {
-                        (0..=3).map(|e| Coord {x: i.x as f32 +e as f32, y: i.y as f32}).collect()
+                        (0..3).map(|e| Coord {x: i.x as f32 +e as f32, y: i.y as f32}).collect()
                     }
                 }else {
                     if y_dist < 0.0 {
-                        (0..=3).map(|e| Coord {x: i.x as f32 , y: i.y as f32 -e as f32}).collect()
+                        (0..3).map(|e| Coord {x: i.x as f32 , y: i.y as f32 -e as f32}).collect()
 
                     }else {
-                        (0..=3).map(|e| Coord {x: i.x as f32 , y: i.y as f32 +e as f32}).collect()
+                        (0..3).map(|e| Coord {x: i.x as f32 , y: i.y as f32 +e as f32}).collect()
                     }
                 }
             ),
