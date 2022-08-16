@@ -10,3 +10,11 @@ pub struct Bubble {
     pub y_velocity: f32,
     pub lifetime: f32,
 }
+#[derive(Clone, PartialEq, Savefile)]
+pub struct TextReadout {
+    pub x: f32,
+    pub y: f32,
+    pub text: String,
+    pub lifetime: f32,
+}
+

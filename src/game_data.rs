@@ -81,6 +81,8 @@ pub struct GameData {
     pub pause: bool,
     #[savefile_ignore]
     pub select_square: SelectSquare,
+    pub score: f32,
+    pub score_text: Vec<TextReadout>
 }
 
 

@@ -6,6 +6,7 @@ use game_data::*;
 mod home;
 use home::*;
 mod particles_fnc;
+use particles_fnc::*;
 use std::path::Path;
 extern crate savefile;
 use savefile::prelude::*;
@@ -14,6 +15,8 @@ use std::env;
 mod key_map;
 mod ability;
 use ability::*;
+use ::rand::prelude::*;
+
 
 pub const GLOBAL_VERSION:u32 = 1;
 
@@ -45,7 +48,9 @@ const DEFAULT_GAME_STATE: GameData = GameData {
             read: false,
             select_mode: false,
             ability: Abilities::Null,
-        }
+        },
+        score: 0.0,
+        score_text: vec![],
 };
 
 
@@ -188,9 +193,14 @@ async fn main() {
             next_frame().await;
         }else { // chose to display home or game
             
+
+
+
+
             let selected_square_x = (mouse_x -1.5).round();
             let selected_square_y = (mouse_y -1.5).round();
             
+
             // draw board
             for i in 0..16 {
                 for j in 0..16 {
@@ -227,14 +237,19 @@ async fn main() {
             dsp_piece.dest_size = Some(vec2(em, em + em / 3.2));
         }
 
+        let mut killed_pieces: Vec<Enemy> = vec![];
 
         if !game_data.pause && !selecting {
         for i in 0..5 {
             if is_key_pressed(user.ability_key[i]) {
-                activate_ability(user.abilities[i], &mut game_data)
+                let starting_pieces = game_data.enemies.clone();
+                activate_ability(user.abilities[i], &mut game_data);
+                killed_pieces = [killed_pieces, vect_difference(&starting_pieces, &game_data.enemies)].concat();
             }
         }
         }
+
+
         // get user input then make move
         if !game_data.pause && !selecting && (player_movement(&mut game_data.player, &user) || game_data.player.sub_round > 3)  {
             game_data.player.sub_round += 1;
@@ -243,6 +258,7 @@ async fn main() {
             game_data.enemies.retain(|e| e.x != game_data.player.target_x || e.y != game_data.player.target_y);
             
             if vect_difference(&e_1, &game_data.enemies).len() > 0 {
+                killed_pieces.push(vect_difference(&e_1, &game_data.enemies)[0].clone());
                 game_data.player.energy += match vect_difference(&e_1, &game_data.enemies)[0].piece {
                     Piece::Pawn => 1.0,
                     Piece::Rook => 2.0,
@@ -367,6 +383,7 @@ async fn main() {
     
     }
     game_data.player.update_pos();
+
     for i in &mut game_data.bubble_particles {
         draw_circle(i.x*em, i.y*em, i.r*em, Color {r: i.color[0]/255.0, g: i.color[1]/255.0, b: i.color[2]/255.0, a: i.color[3]/255.0});
         i.x +=i.x_velocity;
@@ -375,6 +392,7 @@ async fn main() {
         i.lifetime -= 1.0;
     }
     game_data.bubble_particles.retain(|f| f.lifetime > 0.0);
+
 
 
 
@@ -393,6 +411,14 @@ async fn main() {
             em * 0.8,
             GREEN,
         );
+        draw_text(
+            &format!("Score: {}", (game_data.score*100.0).round()/100.0),
+            em * 18.0,
+            6.0 * em,
+            em * 0.8,
+            GOLD,
+        );
+
         if game_data.player.energy > 20.0 {game_data.player.energy = 20.0};
         let bar = "[".to_owned() + &"I".repeat(game_data.player.energy as usize) + &" ".repeat(20-game_data.player.energy as usize) + "]";
         draw_text(
@@ -545,7 +571,7 @@ async fn main() {
                 }
             }
         }
-
+        // draw pause menu
         if game_data.pause {
             draw_rectangle(
                 0.0,
@@ -591,8 +617,6 @@ async fn main() {
                 }
             }
         }
-
-        // select a square
         if game_data.select_square.select_mode {
             draw_texture_ex(
                 select,
@@ -607,13 +631,67 @@ async fn main() {
         && selected_square_y >= 0.0
         && selected_square_y <= 15.0
         {
+            let starting_pieces = game_data.enemies.clone();
             targeted_ability(
                 &mut game_data, 
                 Coord {x: selected_square_x as f32, y: selected_square_y as f32} , em
             );
             game_data.select_square = SelectSquare {..Default::default()};
+            killed_pieces = [killed_pieces, vect_difference(&starting_pieces, &game_data.enemies)].concat();
         }
         }
+
+
+        let mut score_multiplier = 1.0+(killed_pieces.len() as f32 *0.1);
+        if killed_pieces.len() == 1 {
+            score_multiplier = 1.0;
+        }
+        for p in &killed_pieces {
+            let piece_value = match p.piece {
+                Piece::Pawn => 2.0,
+                Piece::Knight => 5.0,
+                Piece::Rook => 5.0,
+                Piece::Bishop => 7.0,
+                Piece:: Queen => 10.0,
+                Piece::King => 12.0,
+                };
+            game_data.score += piece_value * score_multiplier;
+            let mut text = format!("{}x{}",score_multiplier, piece_value);
+            if killed_pieces.len() == 1 {
+                text = format!("{}", piece_value)
+            }
+
+            game_data.score_text.push(
+                TextReadout {
+                    x: p.x + thread_rng().gen_range(1..10)as f32 /10.0,
+                    y: p.y + thread_rng().gen_range(-5..5)as f32 /10.0,
+                    text: text,
+                    lifetime: 30.0 + score_multiplier * 30.0
+                }
+            );
+    }
+
+    for t in &mut game_data.score_text {
+        draw_text(
+            t.text.as_str(), 
+            t.x*em +em,
+            t.y*em +em,
+            em*0.8, 
+            RED
+        );
+        draw_text(
+            t.text.as_str(), 
+            (t.x+0.03)*em +em,
+            (t.y+0.03)*em +em,
+            em*0.8, 
+            GOLD
+        );
+        t.lifetime -= 1.0;
+    }
+    game_data.score_text.retain(|f| f.lifetime >= 0.0);
+
+
+        // select a square
 
         size = em.clone();
         next_frame().await
