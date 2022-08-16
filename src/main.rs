@@ -646,6 +646,7 @@ async fn main() {
         if killed_pieces.len() == 1 {
             score_multiplier = 1.0;
         }
+        let startscore = game_data.score;
         for p in &killed_pieces {
             let piece_value = match p.piece {
                 Piece::Pawn => 2.0,
@@ -656,19 +657,30 @@ async fn main() {
                 Piece::King => 12.0,
                 };
             game_data.score += piece_value * score_multiplier;
+
             let mut text = format!("{}x{}",score_multiplier, piece_value);
             if killed_pieces.len() == 1 {
                 text = format!("{}", piece_value)
             }
-
+            
             game_data.score_text.push(
                 TextReadout {
                     x: p.x + thread_rng().gen_range(1..10)as f32 /10.0,
                     y: p.y + thread_rng().gen_range(-5..5)as f32 /10.0,
                     text: text,
-                    lifetime: 30.0 + score_multiplier * 30.0
+                    lifetime: 30.0 + score_multiplier * 30.0 + thread_rng().gen_range(1..30)as f32
                 }
             );
+    }
+    if game_data.score - startscore >= 1.0 {
+        game_data.score_text.push(
+        TextReadout {
+            x: 22.0 + thread_rng().gen_range(-10..10)as f32 /100.0,
+            y: 5.0 + thread_rng().gen_range(-10..10)as f32 /100.0,
+            text: format!("+ {}", ((game_data.score - startscore)*100.0).round()/100.0),
+            lifetime: 30.0 + 10.0*(game_data.score - startscore)
+        }
+    );
     }
 
     for t in &mut game_data.score_text {
