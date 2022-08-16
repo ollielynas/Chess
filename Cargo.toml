@@ -13,4 +13,3 @@ savefile="0.10"
 savefile-derive="0.10"
 strum = "0.24"
 strum_macros = "0.24"
-

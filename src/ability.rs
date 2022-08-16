@@ -34,7 +34,7 @@ pub fn targeted_ability(data: &mut GameData, point: Coord, em:f32) {
                         x_velocity: 0.0, y_velocity: 0.0, lifetime: thread_rng().gen_range(10..200) as f32 }
                 );
 
-                data.enemies.retain(|f| ((f.x.abs() - x_cord.abs()).abs() + (f.y.abs() - y_cord.abs()).abs()).powf(0.5) > 1.5 )
+                data.enemies.retain(|f| ((f.x.abs() - x_cord.abs()).abs() + (f.y.abs() - y_cord.abs()).abs()).powf(0.5) > 1.2 )
             }
         }
         _ => {}
@@ -70,8 +70,8 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
     return match a {
         Abilities::Blip => AbilityMetadata {
             name: "blip".to_owned(),
-            description: "gain 5 energy. spawn 5 new pieces. counts as a move".to_owned(),
-            cost: -5,
+            description: "spawn 5 new pieces. counts as a move".to_owned(),
+            cost: -3,
         },
         Abilities::RBlast => AbilityMetadata {
             name: "radial blast".to_owned(),
@@ -102,11 +102,7 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData) {
         Abilities::Blip => {
             for _ in 0..5 {
                 data.spawn_enemy();
-                if data.player.energy > 20.0 {
-                    data.player.energy = 20.0;
-                }
             }
-            data.round += 3;
             data.player.sub_round += 3;
         }
         Abilities::RBlast => {

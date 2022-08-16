@@ -15,7 +15,6 @@ mod key_map;
 mod ability;
 use ability::*;
 
-
 pub const GLOBAL_VERSION:u32 = 1;
 
 
@@ -99,6 +98,7 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
 
+
     let mut em = (screen_height() / 32.0) * 1.5;
     let mut dsp_square = DrawTextureParams {
         // 32x32
@@ -107,7 +107,7 @@ async fn main() {
     };
 
 
-
+    
 
 
     let mut dsp_piece = DrawTextureParams {
@@ -129,6 +129,8 @@ async fn main() {
     let rook_texture: Texture2D = load_local_texture("rook".to_owned(), &user).await;
     let bishop_texture: Texture2D = load_local_texture("bishop".to_owned(), &user).await;
     let player_texture: Texture2D = load_local_texture("player_king".to_owned(), &user).await;
+    let knight_texture: Texture2D = load_local_texture("knight".to_owned(), &user).await;
+
     let mut size = 0.0;
 
 
@@ -148,10 +150,16 @@ async fn main() {
     let mut save_timer = Instant::now();
     loop {
 
+        if is_quit_requested() {
+            save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
+            user.save();
+        }
+
 
         if save_timer.elapsed().as_secs() > 5 {
             save_timer = Instant::now();
             save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
+            user.save();
         }
 
         em = (screen_height() / 32.0) * 1.5;
@@ -237,7 +245,8 @@ async fn main() {
             if vect_difference(&e_1, &game_data.enemies).len() > 0 {
                 game_data.player.energy += match vect_difference(&e_1, &game_data.enemies)[0].piece {
                     Piece::Pawn => 1.0,
-                    Piece::Rook => 3.0,
+                    Piece::Rook => 2.0,
+                    Piece::Knight => 2.0,
                     Piece::Bishop => 3.0,
                     _ => 5.0
                 };
@@ -346,6 +355,8 @@ async fn main() {
                 Piece::Pawn => pawn_texture,
                 Piece::Rook => rook_texture,
                 Piece::Bishop => bishop_texture,
+                Piece::Knight => knight_texture,
+
                 _ => pawn_texture
             },
             i.x * em + em,

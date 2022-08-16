@@ -133,63 +133,6 @@ impl GameData {
             let y_dist = self.player.target_y - i.y as f32;
 
             fn bishop_intersect(player: Coord, bishop: Coord) -> Vec<Coord> {
-                // let mut player_line_2:Vec<Coord> = vec![];
-                // let mut player_line_1:Vec<Coord> = vec![];
-                // let mut bishop_line_1:Vec<Coord> = vec![];
-                // let mut  bishop_line_2:Vec<Coord> = vec![];
-
-                // for e in -16..16 {
-                //     if player.x + e as f32 >= 0.0
-                //     && player.y + e as f32 >= 0.0
-                //     && player.x + e as f32 <=15.0
-                //     && player.y + e as f32 <= 15.0
-                //         {
-                //             player_line_1.push(Coord {x:player.x +e as f32, y:player.y + e as f32});
-                //         };
-                //     if player.x - e as f32 >= 0.0
-                //     && player.y + e as f32 >= 0.0
-                //     && player.x - e as f32 <=15.0
-                //     && player.y + e as f32 <= 15.0
-                //         {
-                //             player_line_2.push(Coord {x:player.x -e as f32, y:player.y + e as f32});
-                //         };
-                //     if bishop.x - e as f32 >= 0.0
-                //     && bishop.y + e as f32 >= 0.0
-                //     && bishop.x - e as f32 <=15.0
-                //     && bishop.y + e as f32 <= 15.0
-                //         {
-                //             bishop_line_1.push(Coord {x:bishop.x -e as f32, y:bishop.y + e as f32});
-                //         };
-                //     if bishop.x + e as f32 >= 0.0
-                //     && bishop.y + e as f32 >= 0.0
-                //     && bishop.x + e as f32 <=15.0
-                //     && bishop.y + e as f32 <= 15.0
-                //         {
-                //             bishop_line_2.push(Coord {x:bishop.x +e as f32, y:bishop.y + e as f32});
-                //         };
-                // }
-
-                // let mut overlapping_lines: [Vec<Coord>; 2] = [vec![], vec![]];
-
-                // for j in &player_line_1 {
-                //     if bishop_line_2.contains(&j) {
-                //         overlapping_lines = [player_line_1.clone(), bishop_line_2.clone()];
-                //     }
-                //     if bishop_line_1.contains(&j) {
-                //         overlapping_lines = [player_line_1.clone(), bishop_line_1.clone()];
-                //     }
-                // }
-                // for j in &player_line_2 {
-                //     if bishop_line_2.contains(&j) {
-                //         overlapping_lines = [player_line_2.clone(), bishop_line_2.clone()];
-                //     }
-                //     if bishop_line_1.contains(&j) {
-                //         overlapping_lines = [player_line_2.clone(), bishop_line_1.clone()];
-                //     }
-                // }
-
-
-                // return overlapping_lines[1].clone();
                 return vec![Coord {x:bishop.x, y:bishop.y}]
 
             }
@@ -237,19 +180,37 @@ impl GameData {
                 }
             ),
 
+            Piece::Knight => (
+                if (x_dist).abs() > y_dist.abs() {
+                    if x_dist < 0.0 {
+                        (0..=3).map(|e| Coord {x: i.x as f32 -e as f32, y: i.y as f32}).collect()
+
+                    }else {
+                        (0..=3).map(|e| Coord {x: i.x as f32 +e as f32, y: i.y as f32}).collect()
+                    }
+                }else {
+                    if y_dist < 0.0 {
+                        (0..=3).map(|e| Coord {x: i.x as f32 , y: i.y as f32 -e as f32}).collect()
+
+                    }else {
+                        (0..=3).map(|e| Coord {x: i.x as f32 , y: i.y as f32 +e as f32}).collect()
+                    }
+                }
+            ),
+
             Piece::Bishop => (
-                if y_dist.abs() == x_dist.abs() {
+                if y_dist.abs() == x_dist.abs() || true {
                     if x_dist < 0.0 {
                         if y_dist < 0.0 {
-                            (0..y_dist.abs() as usize +thread_rng().gen_range(1..8)).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 - e as f32}).collect()
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(2..8)).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 - e as f32}).collect()
                         }else {
-                            (0..y_dist.abs() as usize +thread_rng().gen_range(1..8)).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 + e as f32}).collect()
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(2..8)).map(|e| Coord {x: i.x as f32 -e as f32 , y: i.y as f32 + e as f32}).collect()
                         }
                     }else {
                         if y_dist < 0.0 {
-                            (0..y_dist.abs() as usize +thread_rng().gen_range(1..8)).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 - e as f32}).collect()
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(2..8)).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 - e as f32}).collect()
                         }else {
-                            (0..y_dist.abs() as usize +thread_rng().gen_range(1..8)).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 + e as f32}).collect()
+                            (0..y_dist.abs() as usize +thread_rng().gen_range(2..8)).map(|e| Coord {x: i.x as f32 +e as f32 , y: i.y as f32 + e as f32}).collect()
                         }
                     }
                 }else{
@@ -264,7 +225,28 @@ impl GameData {
         };
         i.moves.retain(|&f| f.x < 16.0 && f.y < 16.0);
         i.moves.retain(|&f| f.x >= 0.0 && f.y >= 0.0);
+        
+        match i.piece {
+            Piece::Knight =>{
+                if i.moves.len() > 0 {
+                if (x_dist).abs() > y_dist.abs() {
+                    if y_dist < 0.0 {
+                        i.moves.push(Coord {x: i.moves[i.moves.len() - 1].x, y: i.y - 1.0});
+                    }else {
+                        i.moves.push(Coord {x: i.moves[i.moves.len() - 1].x, y: i.y +1.0});
+                    }
+                }else {
+                    if x_dist < 0.0 {
+                        i.moves.push(Coord {x: i.x as f32 -1.0, y: i.moves[i.moves.len() - 1].y});
+                    }else {
+                        i.moves.push(Coord {x: i.x as f32 +1.0, y: i.moves[i.moves.len() - 1].y});
+                    }
+                }
+            }}
+            _ => {}
         }
+        
+    }
     }
 
 
@@ -281,11 +263,17 @@ impl GameData {
         };
 
         let mut piece_type = Piece::Pawn;
-        if self.round > 10 && thread_rng().gen_bool(0.5) {
+        if self.round > 10 && thread_rng().gen_bool(0.25) {
             piece_type = Piece::Rook;
         }
-        if self.round > 25 && thread_rng().gen_bool(0.5) {
+        if self.round > 10 && thread_rng().gen_bool(0.25) {
+            piece_type = Piece::Knight;
+        }
+        if self.round > 50 && thread_rng().gen_bool(0.25) {
             piece_type = Piece::Bishop;
+        }
+        if self.round > 100 && thread_rng().gen_bool(0.15) {
+            piece_type = Piece::Queen;
         }
 
         self.enemies.push(Enemy {
