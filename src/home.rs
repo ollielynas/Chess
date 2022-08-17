@@ -34,12 +34,16 @@ pub struct UserData {
     pub ability_key: [KeyCode; 5],
     pub abilities: [Abilities; 5],
     pub texture: String,
+    pub high_score: f32,
+    pub high_round: f32,
 }
 
 #[derive(Savefile)]
 struct OtherUserData {
     abilities: [Abilities; 5],
     texture: String,
+    high_score: f32,
+    high_round: f32,
 }
 
 impl UserData {
@@ -80,8 +84,11 @@ impl UserData {
         let keys = self.keybinds_to_vec();
         let other = OtherUserData {
             texture: self.texture.clone(),
-            abilities: self.abilities.clone()
+            abilities: self.abilities.clone(),
+            high_round: self.high_round.clone(),
+            high_score: self.high_score.clone(),
         };
+
         save_file("keybinds.bin", GLOBAL_VERSION, &keys).unwrap();
         save_file("user_data.bin", GLOBAL_VERSION, &other).unwrap();
     }
@@ -101,8 +108,9 @@ impl UserData {
                 Ok(e) => {
                     other = e;
                     self.abilities = other.abilities;
-                    
                     self.texture = other.texture;
+                    self.high_round = other.high_round;
+                    self.high_score = other.high_score;
                 },
                 Err(e) => {
                     println!("Error: {}", e);
@@ -195,7 +203,45 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
     em * 3.0,
         DARKGREEN,
     );
+
+
+        draw_text("Last Round",em * 24.0,3.5 * em,em*1.3,
+        GRAY
+        );
+    draw_text("Round: ",em * 24.0,5.0 * em,em,
+        GRAY
+        );
+        draw_text(&format!("{}", data.round),em * 27.0,5.0 * em,em,
+        RED
+    );
     
+    draw_text(
+        &format!("Score: {}", (data.score*100.0).round()/100.0),
+        em * 24.0,
+        6.0 * em,
+        em,
+        GOLD,
+    );
+
+
+    draw_text("High Score",em * 24.0,7.5 * em,em*1.3,
+        GRAY
+        );
+    draw_text("Round: ",em * 24.0,8.5 * em,em,
+        GRAY
+        );
+        draw_text(&format!("{}", user.high_round),em * 27.0,8.5 * em,em,
+        RED
+    );
+    
+    draw_text(
+        &format!("Score: {}", (user.high_score*100.0).round()/100.0),
+        em * 24.0,
+        9.5 * em,
+        em,
+        GOLD,
+    );
+
     let mouse_y = mouse_position().1/em;
     let mouse_x = mouse_position().0/em;
 
@@ -223,6 +269,7 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
 
     if is_mouse_button_pressed(MouseButton::Left) {
         if mouse_y > 17.0 && mouse_y < 18.0 && mouse_x > 2.0 && mouse_x < 3.2 {
+            user.save();
             if env::consts::OS == "linux" {
                 std::process::exit(0x0100);
             }

@@ -75,6 +75,8 @@ fn default_user_values() -> UserData {UserData {
             KeyCode::Key5,
             ],
         texture: "fonky-monky".to_owned(),
+        high_round: 0.0,
+        high_score: 0.0,
 }}
 
 fn vect_difference(v1: &Vec<Enemy>, v2: &Vec<Enemy>) -> Vec<Enemy> {
@@ -678,10 +680,10 @@ async fn main() {
     if game_data.score - startscore >= 1.0 {
         game_data.score_text.push(
         TextReadout {
-            x: 22.0 + thread_rng().gen_range(-10..10)as f32 /100.0,
-            y: 5.0 + thread_rng().gen_range(-10..10)as f32 /100.0,
+            x: 22.0 + thread_rng().gen_range(-10..10)as f32 /25.0,
+            y: 5.0 + thread_rng().gen_range(-10..10)as f32 /25.0,
             text: format!("+ {}", ((game_data.score - startscore)*100.0).round()/100.0),
-            lifetime: 30.0 + 10.0*(game_data.score - startscore)
+            lifetime: 30.0 + 5.0*(game_data.score - startscore)
         }
     );
     }
@@ -704,6 +706,12 @@ async fn main() {
         t.lifetime -= 1.0;
     }
     game_data.score_text.retain(|f| f.lifetime >= 0.0);
+
+
+    if game_data.score > user.high_score {
+        user.high_score = game_data.score;
+        user.high_round = game_data.round as f32;
+    }
 
 
         // select a square

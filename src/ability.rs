@@ -81,7 +81,7 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
         Abilities::DeathLaser => AbilityMetadata {
             name: "death laser".to_owned(),
             description: "can be shot at any angle, kills everything in its path".to_owned(),
-            cost: 10,
+            cost: 15,
         },
         _ => AbilityMetadata {
             name: "no ability selected".to_owned(),
