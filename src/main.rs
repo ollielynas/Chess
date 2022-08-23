@@ -136,6 +136,7 @@ async fn main() {
     let player_texture: Texture2D = load_local_texture("player_king".to_owned(), &user).await;
     let knight_texture: Texture2D = load_local_texture("knight".to_owned(), &user).await;
     let queen_texture: Texture2D = load_local_texture("queen".to_owned(), &user).await;
+    let king_texture: Texture2D = load_local_texture("king".to_owned(), &user).await;
     let mut size = 0.0;
 
     let mut game_data: GameData = match savefile::load_file("game_data.bin", GLOBAL_VERSION) {
@@ -420,13 +421,27 @@ async fn main() {
                         Piece::Bishop => bishop_texture,
                         Piece::Knight => knight_texture,
                         Piece::Queen => queen_texture,
-                        _ => pawn_texture,
+                        Piece::King(_) => king_texture,
                     },
                     i.x * em + em,
                     i.y * em + em * 0.5,
                     WHITE,
                     dsp_piece.clone(),
                 );
+
+                match i.piece {
+                    Piece::King(a) => {
+                        draw_text (
+                            &a.to_string(),
+                            i.x * em + em,
+                            i.y * em + em * 0.5,
+                            em * 0.5,
+                            BLACK,
+                        );
+                    }
+                    _ => {}
+                }
+
             }
             game_data.player.update_pos();
 
@@ -821,7 +836,34 @@ async fn main() {
                     Piece::Rook => 5.0,
                     Piece::Bishop => 7.0,
                     Piece::Queen => 10.0,
-                    Piece::King => 12.0,
+                    Piece::King(a) => {
+                        if a <= 0.0 { 12.0 }
+                        else {
+                            for l in 0..20 {
+                                let x_move = (thread_rng().gen_range(0.0..=15.0) as f32).round();
+                                let y_move = (thread_rng().gen_range(0.0..=50.0) as f32).round();
+                                for e in &game_data.enemies {
+                                    if (e.x == x_move && e.y == y_move) && l != 19 {
+                                        continue;
+                                    }
+                                }
+                                if l == 19 {
+                                    game_data.enemies.retain(|e| e.x != x_move || e.y != y_move);
+                                }
+
+                                game_data.enemies.push(
+                                    Enemy {
+                                        x:  x_move,
+                                        y: y_move,
+                                        piece: Piece::King(a - 1.0),
+                                        moves: vec![Coord {x: x_move, y: y_move},Coord {x: x_move, y: y_move}],
+                                    },
+                                );
+                                break
+                            }
+                            0.0
+                        }
+                    }
                 };
                 game_data.score += piece_value * score_multiplier;
 
@@ -829,13 +871,14 @@ async fn main() {
                 if killed_pieces.len() == 1 {
                     text = format!("{}", piece_value)
                 }
-
+                if piece_value != 0.0 {
                 game_data.score_text.push(TextReadout {
                     x: p.x + thread_rng().gen_range(1..10) as f32 / 10.0,
                     y: p.y + thread_rng().gen_range(-5..5) as f32 / 10.0,
                     text: text,
                     lifetime: 30.0 + score_multiplier * 30.0 + thread_rng().gen_range(1..30) as f32,
                 });
+            }
             }
             if game_data.score - startscore >= 1.0 {
                 game_data.score_text.push(TextReadout {

@@ -13,7 +13,7 @@ pub enum Piece {
     Rook,
     Bishop,
     Queen,
-    King,
+    King(f32),
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Savefile, Default)]
@@ -383,12 +383,61 @@ impl GameData {
                                 }
                             }
                         }
+                    },
+                    
+                    Piece::King(_) => {
+                        if (x_dist).abs() > y_dist.abs() {
+                            if x_dist < 0.0 {
+                                vec![
+                                    Coord {
+                                        x: i.x as f32,
+                                        y: i.y as f32,
+                                    },
+                                    Coord {
+                                        x: i.x as f32 - 1.0,
+                                        y: i.y as f32,
+                                    },
+                                ]
+                            } else {
+                                vec![
+                                    Coord {
+                                        x: i.x as f32,
+                                        y: i.y as f32,
+                                    },
+                                    Coord {
+                                        x: i.x as f32 + 1.0,
+                                        y: i.y as f32,
+                                    },
+                                ]
+                            }
+                        } else {
+                            if y_dist < 0.0 {
+                                vec![
+                                    Coord {
+                                        x: i.x as f32,
+                                        y: i.y as f32,
+                                    },
+                                    Coord {
+                                        x: i.x as f32,
+                                        y: i.y as f32 - 1.0,
+                                    },
+                                ]
+                            } else {
+                                vec![
+                                    Coord {
+                                        x: i.x as f32,
+                                        y: i.y as f32,
+                                    },
+                                    Coord {
+                                        x: i.x as f32,
+                                        y: i.y as f32 + 1.0,
+                                    },
+                                ]
+                            }
+                        }
                     }
                     // ||------------------------------ Everything else AI ----------------------||
-                    _ => vec![Coord {
-                        x: i.x as f32,
-                        y: i.y as f32,
-                    }],
+
                 };
                 i.moves.retain(|&f| f.x < 16.0 && f.y < 16.0);
                 i.moves.retain(|&f| f.x >= 0.0 && f.y >= 0.0);
@@ -439,11 +488,14 @@ impl GameData {
             }
         }
 
+
+
         if d < 0.0 {
             d = 0.0;
         }
 
         if single {d = 1.0};
+
         
         for _ in 0..d as usize {
             let data = thread_rng().gen_range(0..15);
@@ -461,11 +513,14 @@ impl GameData {
             if self.round > 10 && thread_rng().gen_bool(0.25) {
                 piece_type = Piece::Knight;
             }
-            if self.round > 50 && thread_rng().gen_bool(0.25) {
+            if self.round > 25 && thread_rng().gen_bool(0.25) {
                 piece_type = Piece::Bishop;
             }
-            if self.round > 100 && thread_rng().gen_bool(0.15) {
+            if self.round > 50 && thread_rng().gen_bool(0.15) {
                 piece_type = Piece::Queen;
+            }
+            if self.round > 75 && thread_rng().gen_bool(0.15) {
+                piece_type = Piece::King((d/2.0).round());
             }
 
             self.enemies.push(Enemy {

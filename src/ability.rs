@@ -103,6 +103,7 @@ pub enum Abilities {
     Peaceful,
     Martyrdom,
     Airstrike([Coord;5]),
+    WallOfFire([Coord;5]),
 }
 
 pub const FIRE_COLORS: [[f32; 4]; 5] = [
@@ -126,6 +127,11 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
             name: "Airstrike".to_string(),
             description: "Destroys pieces in a large radius anywhere on the board with a 2 move delay".to_string(),
             cost: 20,
+        },
+        Abilities::WallOfFire(_) => AbilityMetadata {
+            name: "Wall Of Fire".to_string(),
+            description: "Spawns a wall that pieces cannot move through (not added yet)".to_string(),
+            cost: 10,
         },
         Abilities::Peaceful => AbilityMetadata {
             name: "Calming Lull".to_string(),
