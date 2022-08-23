@@ -29,7 +29,7 @@ const DEFAULT_GAME_STATE: GameData = GameData {
         y: 8.0,
         target_x: 8.0,
         target_y: 8.0,
-        sub_round: 3,
+        sub_round: 4,
         energy: 0.0,
     },
     round: 0,
@@ -316,7 +316,13 @@ async fn main() {
                     for i in game_data.effects.iter_mut() {
                         i.1 -= 1.0;
                     }
+                    let starting_pieces = game_data.enemies.clone();
                     trigger_effects(&mut game_data);
+                    killed_pieces = [
+                        killed_pieces,
+                        vect_difference(&starting_pieces, &game_data.enemies),
+                    ]
+                    .concat();
                     game_data.effects.retain(|x| x.1 > 0.0);
                 }
             }
@@ -450,7 +456,7 @@ async fn main() {
                             draw_circle(
                                 b.x * em,
                                 b.y * em,
-                                em * 0.5,
+                                em * 3.0,
                                 Color {
                                     r: 0.0,
                                     g: 0.0,

@@ -22,11 +22,11 @@ pub fn targeted_ability(data: &mut GameData, point: Coord) {
         Abilities::Airstrike(_) => {
             data.effects.push((Abilities::Airstrike(
                 [
-                    Coord { x: point.x + thread_rng().gen_range(-50..50) as f32 /10.0, y: point.y+ thread_rng().gen_range(-50..50) as f32 /10.0 },
-                    Coord { x: point.x + thread_rng().gen_range(-50..50) as f32 /10.0, y: point.y+ thread_rng().gen_range(-50..50) as f32 /10.0 },
-                    Coord { x: point.x + thread_rng().gen_range(-50..50) as f32 /10.0, y: point.y+ thread_rng().gen_range(-50..50) as f32 /10.0 },
-                    Coord { x: point.x + thread_rng().gen_range(-50..50) as f32 /10.0, y: point.y+ thread_rng().gen_range(-50..50) as f32 /10.0 },
-                    Coord { x: point.x + thread_rng().gen_range(-50..50) as f32 /10.0, y: point.y+ thread_rng().gen_range(-50..50) as f32 /10.0 },
+                    Coord { x: point.x + thread_rng().gen_range(-30..30) as f32 /10.0, y: point.y+ thread_rng().gen_range(-30..30) as f32 /10.0 },
+                    Coord { x: point.x + thread_rng().gen_range(-30..30) as f32 /10.0, y: point.y+ thread_rng().gen_range(-30..30) as f32 /10.0 },
+                    Coord { x: point.x + thread_rng().gen_range(-30..30) as f32 /10.0, y: point.y+ thread_rng().gen_range(-30..30) as f32 /10.0 },
+                    Coord { x: point.x + thread_rng().gen_range(-30..30) as f32 /10.0, y: point.y+ thread_rng().gen_range(-30..30) as f32 /10.0 },
+                    Coord { x: point.x + thread_rng().gen_range(-30..30) as f32 /10.0, y: point.y+ thread_rng().gen_range(-30..30) as f32 /10.0 },
                 ],
                 
             ), 2.0));
@@ -125,7 +125,7 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
         Abilities::Airstrike(_) => AbilityMetadata {
             name: "Airstrike".to_string(),
             description: "Destroys pieces in a large radius anywhere on the board with a 2 move delay".to_string(),
-            cost: 10,
+            cost: 20,
         },
         Abilities::Peaceful => AbilityMetadata {
             name: "Calming Lull".to_string(),
@@ -212,7 +212,7 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData) {
             for _ in 0..5 {
                 data.spawn_enemy(true);
             }
-            data.player.sub_round += 3;
+            data.player.sub_round += 5;
         }
         Abilities::Bank => {
             data.effects.push((Abilities::Bank, 5.0));
