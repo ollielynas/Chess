@@ -1,54 +1,108 @@
-use crate::player::*;
-use macroquad::prelude::*;
-use ::rand::prelude::*;
-use strum_macros::EnumIter;
-use crate::particles_fnc::*;
-use crate::home::*;
 use crate::game_data::*;
+use crate::home::*;
+use crate::particles_fnc::*;
+use crate::player::*;
+use ::rand::prelude::*;
+use macroquad::prelude::*;
+use strum_macros::EnumIter;
 
-pub fn targeted_ability(data: &mut GameData, point: Coord, em:f32) {
-    let player = Coord {x: data.player.x, y: data.player.y};
+pub fn targeted_ability(data: &mut GameData, point: Coord) {
+    let player = Coord {
+        x: data.player.x,
+        y: data.player.y,
+    };
     match data.select_square.ability {
+        Abilities::Teleport => {
+            data.player.target_x = point.x;
+            data.player.target_y = point.y;
+            data.player.x = point.x;
+            data.player.y = point.y;
+        }
+
+        Abilities::Airstrike(_) => {
+            data.effects.push((Abilities::Airstrike(
+                [
+                    Coord { x: point.x + thread_rng().gen_range(-50..50) as f32 /10.0, y: point.y+ thread_rng().gen_range(-50..50) as f32 /10.0 },
+                    Coord { x: point.x + thread_rng().gen_range(-50..50) as f32 /10.0, y: point.y+ thread_rng().gen_range(-50..50) as f32 /10.0 },
+                    Coord { x: point.x + thread_rng().gen_range(-50..50) as f32 /10.0, y: point.y+ thread_rng().gen_range(-50..50) as f32 /10.0 },
+                    Coord { x: point.x + thread_rng().gen_range(-50..50) as f32 /10.0, y: point.y+ thread_rng().gen_range(-50..50) as f32 /10.0 },
+                    Coord { x: point.x + thread_rng().gen_range(-50..50) as f32 /10.0, y: point.y+ thread_rng().gen_range(-50..50) as f32 /10.0 },
+                ],
+                
+            ), 2.0));
+        }
+
+        Abilities::Jump => {
+            let x_dist = player.x - point.x;
+            let y_dist = player.y - point.y;
+            if (x_dist.powf(2.0) + y_dist.powf(2.0)).powf(0.5) <= 3.0 {
+                data.player.target_x = point.x;
+                data.player.target_y = point.y;
+            } else {
+                data.player.energy += 5.0;
+                data.score_text.push(TextReadout {
+                    x: point.x - 2.0,
+                    y: point.y + 1.0,
+                    text: "Too far away".to_string(),
+                    lifetime: 40.0,
+                })
+            }
+        }
         Abilities::DeathLaser => {
-            println!("death {} {}", player.x, ((player.x+point.x)/2.0));
+            println!("death {} {}", player.x, ((player.x + point.x) / 2.0));
 
             for i in 0..250 {
-                let x_cord = player.x + (player.x - point.x) * -1.0*(i as f32/25.0);
-                let y_cord = player.y + (player.y - point.y) * -1.0*(i as f32/25.0); 
-                if x_cord > 15.0 || x_cord < 0.0 || y_cord > 15.0 || y_cord < 0.0 {break}
-                data.bubble_particles.push(
-                    Bubble { 
-                        x: x_cord +1.5 + thread_rng().gen_range(-15..15) as f32 / 50.0,
-                        y: y_cord +1.5 + thread_rng().gen_range(-15..15) as f32 / 50.0,
-                        color: [thread_rng().gen_range(200..250) as f32
-                        ,0.0,0.0,250.0], r: thread_rng().gen_range(10..20) as f32 / 100.0, decay: 0.0,
-                        x_velocity: 0.0, y_velocity: 0.0, lifetime: thread_rng().gen_range(10..200) as f32 }
-                );
+                let x_cord = player.x + (player.x - point.x) * -1.0 * (i as f32 / 25.0);
+                let y_cord = player.y + (player.y - point.y) * -1.0 * (i as f32 / 25.0);
+                if !(0.0..=15.0).contains(&x_cord) || !(0.0..=15.0).contains(&y_cord) {
+                    break;
+                }
+                data.bubble_particles.push(Bubble {
+                    x: x_cord + 1.5 + thread_rng().gen_range(-15..15) as f32 / 50.0,
+                    y: y_cord + 1.5 + thread_rng().gen_range(-15..15) as f32 / 50.0,
+                    color: [thread_rng().gen_range(200..250) as f32, 0.0, 0.0, 250.0],
+                    r: thread_rng().gen_range(10..20) as f32 / 100.0,
+                    decay: 0.0,
+                    x_velocity: 0.0,
+                    y_velocity: 0.0,
+                    lifetime: thread_rng().gen_range(10..200) as f32,
+                });
 
                 let yellow = thread_rng().gen_range(100..200) as f32;
-                data.bubble_particles.push(
-                    Bubble { 
-                        x: x_cord + 1.5 + thread_rng().gen_range(-15..15) as f32 / 50.0,
-                        y: y_cord + 1.5 + thread_rng().gen_range(-15..15) as f32 / 50.0,
-                        color: [yellow ,yellow, 0.0, 125.0], r: thread_rng().gen_range(20..30) as f32 / 100.0, decay: 0.001,
-                        x_velocity: 0.0, y_velocity: 0.0, lifetime: thread_rng().gen_range(10..200) as f32 }
-                );
+                data.bubble_particles.push(Bubble {
+                    x: x_cord + 1.5 + thread_rng().gen_range(-15..15) as f32 / 50.0,
+                    y: y_cord + 1.5 + thread_rng().gen_range(-15..15) as f32 / 50.0,
+                    color: [yellow, yellow, 0.0, 125.0],
+                    r: thread_rng().gen_range(20..30) as f32 / 100.0,
+                    decay: 0.001,
+                    x_velocity: 0.0,
+                    y_velocity: 0.0,
+                    lifetime: thread_rng().gen_range(10..200) as f32,
+                });
 
-                data.enemies.retain(|f| ((f.x.abs() - x_cord.abs()).abs() + (f.y.abs() - y_cord.abs()).abs()).powf(0.5) > 1.2 )
+                data.enemies.retain(|f| {
+                    ((f.x.abs() - x_cord.abs()).abs() + (f.y.abs() - y_cord.abs()).abs()).powf(0.5)
+                        > 1.2
+                })
             }
         }
         _ => {}
     }
-    
 }
-
 
 #[derive(Debug, Copy, Clone, PartialEq, Savefile, EnumIter)]
 pub enum Abilities {
     Null,
     RBlast,
     Blip,
-    DeathLaser, 
+    Jump,
+    DeathLaser,
+    Bank,
+    Teleport,
+    BloodBath,
+    Peaceful,
+    Martyrdom,
+    Airstrike([Coord;5]),
 }
 
 pub const FIRE_COLORS: [[f32; 4]; 5] = [
@@ -67,7 +121,42 @@ pub struct AbilityMetadata {
 }
 
 pub fn metadata(a: Abilities) -> AbilityMetadata {
-    return match a {
+    match a {
+        Abilities::Airstrike(_) => AbilityMetadata {
+            name: "Airstrike".to_string(),
+            description: "Destroys pieces in a large radius anywhere on the board with a 2 move delay".to_string(),
+            cost: 10,
+        },
+        Abilities::Peaceful => AbilityMetadata {
+            name: "Calming Lull".to_string(),
+            description: "Decreases enemy spawn rate for 15 rounds".to_string(),
+            cost: 10,
+        },
+        Abilities::Martyrdom => AbilityMetadata {
+            name: "Martyrdom".to_string(),
+            description: "Kills Everything. You die on the next turn. Adds 0.5x score multiplayer".to_string(),
+            cost: 0,
+        },
+        Abilities::BloodBath => AbilityMetadata {
+            name: "Blood Bath".to_string(),
+            description: "Double the effect of the multi kill multiplier for 3 rounds (cannot stack)".to_string(),
+            cost: 5,
+        },
+        Abilities::Jump => AbilityMetadata {
+            name: "Jump".to_string(),
+            description: "Allows the player to move to any space in a 3 square radius".to_string(),
+            cost: 5,
+        },
+        Abilities::Teleport => AbilityMetadata {
+            name: "Teleport".to_string(),
+            description: "The ultimate open, move anywhere on the board".to_string(),
+            cost: 15,
+        },
+        Abilities::Bank => AbilityMetadata {
+            name: "Investment Banking".to_string(),
+            description: "returns 10 energy in 5 rounds".to_string(),
+            cost: 8,
+        },
         Abilities::Blip => AbilityMetadata {
             name: "blip".to_owned(),
             description: "spawn 5 new pieces. counts as a move".to_owned(),
@@ -88,7 +177,7 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
             description: "no ability has been selected".to_owned(),
             cost: 99,
         },
-    };
+    }
 }
 
 pub fn activate_ability(ability: Abilities, data: &mut GameData) {
@@ -99,11 +188,40 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData) {
     };
 
     match ability {
+        Abilities::Jump => {
+            data.select_square = SelectSquare {
+                point: Coord { x: 0.0, y: 0.0 },
+                select_mode: true,
+                read: false,
+                ability: Abilities::Jump,
+            };
+        }
+        Abilities::Martyrdom => {
+            data.effects.push((Abilities::Martyrdom, 1.0));
+            data.enemies = vec![];
+        }
+        Abilities::Teleport => {
+            data.select_square = SelectSquare {
+                point: Coord { x: 0.0, y: 0.0 },
+                select_mode: true,
+                read: false,
+                ability: Abilities::Teleport,
+            };
+        }
         Abilities::Blip => {
             for _ in 0..5 {
-                data.spawn_enemy();
+                data.spawn_enemy(true);
             }
             data.player.sub_round += 3;
+        }
+        Abilities::Bank => {
+            data.effects.push((Abilities::Bank, 5.0));
+        }
+        Abilities::BloodBath => {
+            data.effects.push((Abilities::BloodBath, 3.0));
+        }
+        Abilities::Peaceful => {
+            data.effects.push((Abilities::Peaceful, 15.0));
         }
         Abilities::RBlast => {
             let mut blast_area: Vec<Coord> = vec![];
@@ -140,15 +258,53 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData) {
 
             data.enemies
                 .retain(|f| !blast_area.contains(&Coord { x: f.x, y: f.y }))
-        },
+        }
         Abilities::DeathLaser => {
-            data.select_square = SelectSquare { 
-                point: Coord {x:0.0, y:0.0},
+            data.select_square = SelectSquare {
+                point: Coord { x: 0.0, y: 0.0 },
                 select_mode: true,
                 read: false,
-                ability: Abilities::DeathLaser
+                ability: Abilities::DeathLaser,
+            }
+        }
+        Abilities::Airstrike(a) => {
+            data.select_square = SelectSquare {
+                point: Coord { x: 0.0, y: 0.0 },
+                select_mode: true,
+                read: false,
+                ability: Abilities::Airstrike(a),
             }
         }
         _ => (),
+    }
+}
+
+
+pub fn trigger_effects(data: &mut GameData) {
+    for effect in &mut data.effects {
+        match effect.0 {
+            Abilities::Bank => {
+                if effect.1 == 0.0 {
+                    data.player.energy += 10.0;
+                    if data.player.energy > 30.0 {
+                        data.player.energy = 30.0;
+                    }
+                }
+            },
+            Abilities::Martyrdom => {
+                if effect.1 == 0.0 {
+                    data.alive = false;
+                    }
+            }
+            Abilities::Airstrike(b) => {
+                if effect.1 == 0.0 {
+                    for i in b {
+                        data.enemies.retain(|f| ((f.x-i.x).powi(2) + (f.y-i.y).powi(2)).powf(0.5) > 3.0);
+                    }
+                }
+            }
+            _ => {},
+        }
+
     }
 }
