@@ -9,6 +9,9 @@ use savefile::prelude::*;
 use std::env;
 use strum::IntoEnumIterator; // 0.17.1
 use strum_macros::EnumIter; // 0.17.1
+use std::fs;
+use std::path::PathBuf;
+
 
 fn key_as_string(key: KeyCode) -> String {
     format!("{:?}", key)
@@ -188,6 +191,7 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
     }
 
     for i in 0..o.len() {
+        // draw descriptions and names of abilities
         draw_text(
             &metadata(o[i]).name,
             2.0 * em,
@@ -240,9 +244,49 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
     }
 }
 
+fn select_texture(data: &mut GameData, user: &mut UserData, em: f32) {
+    if is_key_pressed(KeyCode::Escape) {
+        data.select_texture_pack = false;
+    }
+    let paths = fs::read_dir("./src/res").unwrap();
+    let mut path_str = paths.filter_map(|e| e.ok()).map(|e| e.path()).filter(|e| e.is_dir()).collect::<Vec<_>>();
+    path_str.sort();
+
+    draw_text("Texture Packs", 2.0 * em, 2.0 * em as f32, em * 1.6, DARKGRAY);
+    draw_text(format!("current texture pack: {}", user.texture).as_str(), 2.0 * em, 19.5 * em as f32, em*0.8, DARKGRAY);
+    let path = PathBuf::from("./../res.");
+    draw_text(format!("path: {:?}", path).as_str(), 2.0 * em, 20.5 * em as f32, em*0.8, DARKGRAY);
+
+    draw_text("(restart required)", 2.4 * em, 2.5 * em, em/2.0, RED);
+
+    for i in 0..path_str.len() {
+        let x_displacement = (i as f32/10.0).floor();
+        draw_text(
+            &path_str[i].to_str().unwrap().replace("./src/res\\", ""),
+            2.0 * em + (i as f32/10.0).floor() + x_displacement * 20.0 * em,
+            (i as f32 * em + 3.0 * em) * 1.5 + em - x_displacement*15.0*em,
+            em * 1.2,
+            GRAY,
+        );
+        if is_mouse_button_pressed(MouseButton::Left) {
+            if mouse_position().1 > (i as f32 * em + 3.0 * em) * 1.5 && mouse_position().1 < (i as f32 * em + 3.0 * em) * 1.5 + em {
+                user.texture = path_str[i].to_str().unwrap().replace("./src/res\\", "");
+                data.select_texture_pack = false;
+                user.save();
+            }
+        }
+    }
+
+
+}
+
 pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
     if data.select_ability.open {
         select_ability(data, user, em);
+        return;
+    }
+    if data.select_texture_pack {
+        select_texture(data, user, em);
         return;
     }
 
@@ -300,8 +344,11 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
                 std::process::exit(0x0100);
             }
             std::process::exit(0);
+        }else if mouse_y > 16.0 && mouse_y < 17.0 && mouse_x > 2.0 && mouse_x < 6.2 {
+            data.select_texture_pack = true;
         }
     }
+
 
     for i in 0..5 {
         draw_text(
@@ -319,15 +366,15 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
             ORANGE,
         );
 
+        if mouse_y > 5.5 + i as f32
+        && mouse_y < 6.5 + i as f32
+        && mouse_position().0 > em
+        && mouse_position().0 < (screen_width() / 2.0) + 3.2 * em
+        {
         if is_mouse_button_pressed(MouseButton::Left) {
-            if mouse_y > 5.5 + i as f32
-                && mouse_y < 6.5 + i as f32
-                && mouse_position().0 > screen_width() / 2.0 - em
-                && mouse_position().0 < (screen_width() / 2.0) + 3.2 * em
-            {
                 data.select_ability.open = true;
                 data.select_ability.slot = i;
-            }
+        }
         }
     }
 }

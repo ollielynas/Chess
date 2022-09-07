@@ -14,3 +14,9 @@ savefile-derive="0.10"
 strum = "0.24"
 strum_macros = "0.24"
 
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+opt-level = 3
+debug=false

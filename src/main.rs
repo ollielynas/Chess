@@ -1,4 +1,5 @@
 use macroquad::prelude::*;
+use macroquad::audio::*;
 mod player;
 use player::*;
 mod game_data;
@@ -8,7 +9,6 @@ use home::*;
 mod particles_fnc;
 use particles_fnc::*;
 use std::path::Path;
-use std::sync::Arc;
 extern crate savefile;
 use savefile::prelude::*;
 use std::env;
@@ -51,6 +51,8 @@ const DEFAULT_GAME_STATE: GameData = GameData {
     score: 0.0,
     score_text: vec![],
     effects: vec![],
+    select_texture_pack: false,
+    select_keybinds: false,
 };
 
 fn default_user_values() -> UserData {
@@ -121,6 +123,8 @@ async fn main() {
         ..Default::default()
     };
 
+    let sound_track = load_sound("soundtrack.mp3").await.unwrap();
+
     let mut show_effects = false;
 
     let mut user: UserData = default_user_values();
@@ -147,6 +151,8 @@ async fn main() {
             DEFAULT_GAME_STATE
         }
     };
+
+    
 
     let mut save_timer = Instant::now();
     loop {

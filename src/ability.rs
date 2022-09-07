@@ -104,6 +104,7 @@ pub enum Abilities {
     Martyrdom,
     Airstrike([Coord;5]),
     WallOfFire([Coord;5]),
+    Redstone,
 }
 
 pub const FIRE_COLORS: [[f32; 4]; 5] = [
@@ -127,6 +128,11 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
             name: "Airstrike".to_string(),
             description: "Destroys pieces in a large radius anywhere on the board with a 2 move delay".to_string(),
             cost: 20,
+        },
+        Abilities::Redstone => AbilityMetadata {
+            name: "Redstone Powder".to_string(),
+            description: "increases the duration of all active effects by 2".to_string(),
+            cost: 5,
         },
         Abilities::WallOfFire(_) => AbilityMetadata {
             name: "Wall Of Fire".to_string(),
@@ -165,8 +171,8 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
         },
         Abilities::Blip => AbilityMetadata {
             name: "blip".to_owned(),
-            description: "spawn 5 new pieces. counts as a move".to_owned(),
-            cost: -3,
+            description: "spawn 5 new pieces. counts as a move. has a negative effect on active effects.".to_owned(),
+            cost: -2,
         },
         Abilities::RBlast => AbilityMetadata {
             name: "radial blast".to_owned(),
@@ -202,6 +208,11 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData) {
                 ability: Abilities::Jump,
             };
         }
+        Abilities::Redstone => {
+            for effect in &mut data.effects {
+                effect.1 += 2.0;
+            }
+        },
         Abilities::Martyrdom => {
             data.effects.push((Abilities::Martyrdom, 1.0));
             data.enemies = vec![];
@@ -217,6 +228,12 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData) {
         Abilities::Blip => {
             for _ in 0..5 {
                 data.spawn_enemy(true);
+            }
+            for effect in &mut data.effects {
+                if effect.1  <= 2.0 {
+                    effect.1 = 2.0;
+                }
+                effect.1 -= 2.0;
             }
             data.player.sub_round += 5;
         }

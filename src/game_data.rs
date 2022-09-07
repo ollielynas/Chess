@@ -80,13 +80,18 @@ pub struct GameData {
     pub select_square: SelectSquare,
     pub score: f32,
     pub score_text: Vec<TextReadout>,
-    pub effects: Vec<(Abilities, f32)>
+    pub effects: Vec<(Abilities, f32)>,
+    #[savefile_ignore]
+    pub select_texture_pack: bool,
+    #[savefile_ignore]
+    pub select_keybinds: bool,
 }
 
 impl GameData {
     pub fn difficulty(&self) -> f32 {
         (self.round as f32 / 3.141569).sin() + (self.round as f32 / 40.0)
     }
+
 
     pub fn enemy_move(&mut self) {
         if self.enemies.is_empty() {
