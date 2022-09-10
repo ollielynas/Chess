@@ -53,6 +53,7 @@ const DEFAULT_GAME_STATE: GameData = GameData {
     effects: vec![],
     select_texture_pack: false,
     select_keybinds: false,
+    keybind_focus: -1.0,
 };
 
 fn default_user_values() -> UserData {
@@ -123,7 +124,7 @@ async fn main() {
         ..Default::default()
     };
 
-    let sound_track = load_sound("soundtrack.mp3").await.unwrap();
+    // let sound_track = load_sound("soundtrack.mp3").await.unwrap();
 
     let mut show_effects = false;
 

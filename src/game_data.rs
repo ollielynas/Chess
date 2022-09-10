@@ -85,6 +85,8 @@ pub struct GameData {
     pub select_texture_pack: bool,
     #[savefile_ignore]
     pub select_keybinds: bool,
+    #[savefile_ignore]
+    pub keybind_focus: f32,
 }
 
 impl GameData {
