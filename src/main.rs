@@ -1,3 +1,7 @@
+#![windows_subsystem = "windows"]
+
+
+use image::codecs::png::FilterType;
 use macroquad::prelude::*;
 use macroquad::audio::*;
 mod player;

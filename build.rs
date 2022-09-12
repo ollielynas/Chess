@@ -31,7 +31,11 @@ fn main() -> io::Result<()> {
 
     println!("cargo:warning={:?} {:?}", input_path, output_path);
 
-    copy("./res", output_path.as_os_str().to_str().unwrap(), &options).expect("file not found");
+    let res = copy("./res", output_path.as_os_str().to_str().unwrap(), &options);
+
+    if res.is_ok() {
+        res.unwrap();
+    }
 
 
     #[cfg(windows)] {
