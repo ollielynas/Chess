@@ -1,9 +1,9 @@
-#![windows_subsystem = "windows"]
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-
-use image::codecs::png::FilterType;
-use macroquad::prelude::*;
+use image::imageops::FilterType;
 use macroquad::audio::*;
+use macroquad::miniquad::conf::Icon;
+use macroquad::prelude::*;
 mod player;
 use player::*;
 mod game_data;
@@ -21,9 +21,8 @@ mod ability;
 mod key_map;
 use ::rand::prelude::*;
 use ability::*;
-use image::{open, DynamicImage};
-
-
+use image::open;
+use std::convert::TryInto;
 
 pub const GLOBAL_VERSION: u32 = 1;
 
@@ -110,8 +109,37 @@ fn window_conf() -> Conf {
     Conf {
         window_title: "Bare King".to_owned(),
         fullscreen: true,
+        icon: Some(Icon {
+            small: vec_to_array(get_icon(16)),
+            medium: vec_to_array(get_icon(32)),
+            big: vec_to_array(get_icon(64)),
+        }),
         ..Default::default()
     }
+}
+
+fn vec_to_array<T, const N: usize>(v: Vec<T>) -> [T; N] {
+    v.try_into()
+        .unwrap_or_else(|v: Vec<T>| panic!("Expected a Vec of length {} but it was {}", N, v.len()))
+}
+
+fn get_icon(size: u32) -> Vec<u8> {
+    let gray = open("res/icon.ico")
+        .unwrap()
+        .resize_exact(size, size, FilterType::Nearest)
+        .into_rgba8();
+    println!("{:?}", gray);
+
+    let mut array = vec![];
+    for i in 0..size {
+        for j in 0..size {
+            array.push(gray[(j, i)].0[0]);
+            array.push(gray[(j, i)].0[1]);
+            array.push(gray[(j, i)].0[2]);
+            array.push(gray[(j, i)].0[3]);
+        }
+    }
+    array
 }
 
 #[macroquad::main(window_conf)]
@@ -124,12 +152,6 @@ async fn main() {
     };
     let mut debug_mode = vec![];
     let mut god_mode = false;
-
-    // let gray = open("res/icon.png").unwrap()
-    //     .resize_exact(128, 128, FilterType::Nearest)
-    //     .into_luma8();
-    
-    // println!("{:?}", gray);
 
     let mut dsp_piece = DrawTextureParams {
         // 32x42
@@ -165,8 +187,6 @@ async fn main() {
             DEFAULT_GAME_STATE
         }
     };
-
-    
 
     let mut save_timer = Instant::now();
     loop {
@@ -451,7 +471,7 @@ async fn main() {
 
                 match i.piece {
                     Piece::King(a) => {
-                        draw_text (
+                        draw_text(
                             &a.to_string(),
                             i.x * em + em,
                             i.y * em + em * 0.5,
@@ -461,7 +481,6 @@ async fn main() {
                     }
                     _ => {}
                 }
-
             }
             game_data.player.update_pos();
 
@@ -857,8 +876,9 @@ async fn main() {
                     Piece::Bishop => 7.0,
                     Piece::Queen => 10.0,
                     Piece::King(a) => {
-                        if a <= 0.0 { 12.0 }
-                        else {
+                        if a <= 0.0 {
+                            12.0
+                        } else {
                             for l in 0..20 {
                                 let x_move = (thread_rng().gen_range(0.0..=15.0) as f32).round();
                                 let y_move = (thread_rng().gen_range(0.0..=50.0) as f32).round();
@@ -871,15 +891,22 @@ async fn main() {
                                     game_data.enemies.retain(|e| e.x != x_move || e.y != y_move);
                                 }
 
-                                game_data.enemies.push(
-                                    Enemy {
-                                        x:  x_move,
-                                        y: y_move,
-                                        piece: Piece::King(a - 1.0),
-                                        moves: vec![Coord {x: x_move, y: y_move},Coord {x: x_move, y: y_move}],
-                                    },
-                                );
-                                break
+                                game_data.enemies.push(Enemy {
+                                    x: x_move,
+                                    y: y_move,
+                                    piece: Piece::King(a - 1.0),
+                                    moves: vec![
+                                        Coord {
+                                            x: x_move,
+                                            y: y_move,
+                                        },
+                                        Coord {
+                                            x: x_move,
+                                            y: y_move,
+                                        },
+                                    ],
+                                });
+                                break;
                             }
                             0.0
                         }
@@ -892,13 +919,15 @@ async fn main() {
                     text = format!("{}", piece_value)
                 }
                 if piece_value != 0.0 {
-                game_data.score_text.push(TextReadout {
-                    x: p.x + thread_rng().gen_range(1..10) as f32 / 10.0,
-                    y: p.y + thread_rng().gen_range(-5..5) as f32 / 10.0,
-                    text: text,
-                    lifetime: 30.0 + score_multiplier * 30.0 + thread_rng().gen_range(1..30) as f32,
-                });
-            }
+                    game_data.score_text.push(TextReadout {
+                        x: p.x + thread_rng().gen_range(1..10) as f32 / 10.0,
+                        y: p.y + thread_rng().gen_range(-5..5) as f32 / 10.0,
+                        text: text,
+                        lifetime: 30.0
+                            + score_multiplier * 30.0
+                            + thread_rng().gen_range(1..30) as f32,
+                    });
+                }
             }
             if game_data.score - startscore >= 1.0 {
                 game_data.score_text.push(TextReadout {
