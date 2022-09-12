@@ -320,7 +320,7 @@ fn select_texture(data: &mut GameData, user: &mut UserData, em: f32) {
     for i in 0..path_str.len() {
         let x_displacement = (i as f32/10.0).floor();
         draw_text(
-            &path_str[i].to_str().unwrap().replace("./src/res\\", ""),
+            &path_str[i].to_str().unwrap().replace("./res\\", ""),
             2.0 * em + (i as f32/10.0).floor() + x_displacement * 20.0 * em,
             (i as f32 * em + 3.0 * em) * 1.5 + em - x_displacement*15.0*em,
             em * 1.2,
@@ -328,7 +328,7 @@ fn select_texture(data: &mut GameData, user: &mut UserData, em: f32) {
         );
         if is_mouse_button_pressed(MouseButton::Left) {
             if mouse_position().1 > (i as f32 * em + 3.0 * em) * 1.5 && mouse_position().1 < (i as f32 * em + 3.0 * em) * 1.5 + em {
-                user.texture = path_str[i].to_str().unwrap().replace("./src/res\\", "");
+                user.texture = path_str[i].to_str().unwrap().replace("./res\\", "");
                 data.select_texture_pack = false;
                 user.save();
             }

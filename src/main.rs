@@ -93,6 +93,7 @@ fn vect_difference(v1: &[Enemy], v2: &[Enemy]) -> Vec<Enemy> {
 }
 
 async fn load_local_texture(id: String, user: &UserData) -> Texture2D {
+    println!("./res/{}/{}.png", user.texture, id);
     if Path::new(&format!("./res/{}/{}.png", user.texture, id)).exists() {
         load_texture(&format!("./res/{}/{}.png", user.texture, id))
             .await
@@ -128,7 +129,6 @@ fn get_icon(size: u32) -> Vec<u8> {
         .unwrap()
         .resize_exact(size, size, FilterType::Nearest)
         .into_rgba8();
-    println!("{:?}", gray);
 
     let mut array = vec![];
     for i in 0..size {
@@ -173,7 +173,7 @@ async fn main() {
     let red_square: Texture2D = load_local_texture("red_square".to_owned(), &user).await;
     let rook_texture: Texture2D = load_local_texture("rook".to_owned(), &user).await;
     let bishop_texture: Texture2D = load_local_texture("bishop".to_owned(), &user).await;
-    let player_texture: Texture2D = load_local_texture("player_king".to_owned(), &user).await;
+    let player_texture: Texture2D = load_local_texture("player".to_owned(), &user).await;
     let knight_texture: Texture2D = load_local_texture("knight".to_owned(), &user).await;
     let queen_texture: Texture2D = load_local_texture("queen".to_owned(), &user).await;
     let king_texture: Texture2D = load_local_texture("king".to_owned(), &user).await;
@@ -791,7 +791,6 @@ async fn main() {
                     GREEN,
                 );
                 if is_mouse_button_pressed(MouseButton::Left) {
-                    println!("{} {}", mouse_x, mouse_y);
                     if mouse_x > 15.0 && mouse_x < 18.3 && mouse_y > 9.7 && mouse_y < 10.6 {
                         save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
                         user.save();
