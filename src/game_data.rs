@@ -526,9 +526,9 @@ impl GameData {
             if self.round > 50 && thread_rng().gen_bool(0.15) {
                 piece_type = Piece::Queen;
             }
-            if self.round > 75 && thread_rng().gen_bool(0.15) {
-                piece_type = Piece::King((d/2.0).round());
-            }
+            // if self.round > 75 && thread_rng().gen_bool(0.15) {
+            //     piece_type = Piece::King((d/2.0).round());
+            // }
 
             self.enemies.push(Enemy {
                 x: -20.0 * (8 - spawn_coords.0) as f32,

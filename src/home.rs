@@ -202,14 +202,14 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
             &format!("Cost: {}", metadata(o[i]).cost),
             20.0 * em,
             (((i) * 2) as f32 * em + 3.0 * em) * 1.5,
-            em,
+            em*0.8,
             GRAY,
         );
         draw_text(
             &metadata(o[i]).description,
             2.0 * em,
             (((i) * 2) as f32 * em + 3.8 * em) * 1.5,
-            em,
+            em*0.8,
             GRAY,
         );
         if mouse_y > (i as f32+1.0) * 2.7 + 1.0 && mouse_y < (i as f32 + 2.0) * 2.7 + 1.0 {
@@ -224,14 +224,14 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
                 &format!("Cost: {}", metadata(o[i]).cost),
                 20.0 * em,
                 (((i) * 2) as f32 * em + 3.0 * em) * 1.5,
-                em,
+                em*0.8,
                 LIGHTGRAY,
             );
             draw_text(
                 &metadata(o[i]).description,
                 2.0 * em,
                 (((i) * 2) as f32 * em + 3.8 * em) * 1.5,
-                em,
+                em *0.8,
                 LIGHTGRAY,
             );
             if is_mouse_button_pressed(MouseButton::Left) {
@@ -245,11 +245,33 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
 
 fn select_keybinds(data: &mut GameData, user: &mut UserData, em: f32) {
     if is_key_pressed(KeyCode::Escape) {
+        user.save();
         data.select_keybinds = false;
     }
     draw_text("Keybinds", 2.0 * em, 2.0 * em as f32, em * 1.6, DARKGRAY);
     let keys =  ["up", "down", "left", "right", "ability 1", "ability 2", "ability 3", "ability 4", "ability 5"];
     let keys2 = vec![vec![user.up, user.down, user.left, user.right], vec![user.ability_key[0],user.ability_key[1],user.ability_key[2],user.ability_key[3],user.ability_key[4]] ].concat();
+
+    let c = get_last_key_pressed();
+        if c != None {
+        if is_key_pressed(c.unwrap()) && !is_key_pressed(KeyCode::Escape){
+
+            match data.keybind_focus as usize {
+                0 => {user.up = c.unwrap()},
+                1 => {user.down = c.unwrap()},
+                2 => {user.left = c.unwrap()},
+                3 => {user.right = c.unwrap()},
+                4 => {user.ability_key[0] = c.unwrap()},
+                5 => {user.ability_key[1] = c.unwrap()},
+                6 => {user.ability_key[2] = c.unwrap()},
+                7 => {user.ability_key[3] = c.unwrap()},
+                8 => {user.ability_key[4] = c.unwrap()},
+                _ => {}
+            }
+            data.keybind_focus = -3.0
+        }}
+
+
     for i in 0..9 {
         if data.keybind_focus == i as f32  {
         draw_text(&format!("{}:", keys[i], ), 2.0 * em, (i as f32*1.3 + 5.0) * em, em, Color::new(0.5, 0.5, 1.0, 1.0));
@@ -265,40 +287,34 @@ fn select_keybinds(data: &mut GameData, user: &mut UserData, em: f32) {
                 data.keybind_focus = i as f32;
             }
         }
-
-        let c = get_last_key_pressed();
-        if c != None {
-        if is_key_pressed(c.unwrap()) {
-            match i {
-                0 => {user.up = c.unwrap()},
-                1 => {user.down = c.unwrap()},
-                2 => {user.left = c.unwrap()},
-                3 => {user.right = c.unwrap()},
-                4 => {user.ability_key[0] = c.unwrap()},
-                5 => {user.ability_key[1] = c.unwrap()},
-                6 => {user.ability_key[2] = c.unwrap()},
-                7 => {user.ability_key[3] = c.unwrap()},
-                8 => {user.ability_key[4] = c.unwrap()},
-                _ => {}
-            }
-        }}
-
     }
+
+    if is_mouse_button_pressed(MouseButton::Left) {
+    let mouse_y = mouse_position().1 / em;
+    if mouse_y > (8.0*1.3 + 5.0) {
+        data.keybind_focus = -3.0;
+    }
+    }
+
 }
 
 fn select_texture(data: &mut GameData, user: &mut UserData, em: f32) {
     if is_key_pressed(KeyCode::Escape) {
         data.select_texture_pack = false;
     }
-    let paths = fs::read_dir("./src/res").unwrap();
+    if fs::read_dir("./res").is_err() {
+        draw_text("./res file not found", 2.0 * em, 2.0 * em as f32, em * 1.6, DARKGRAY);
+        return
+    }
+    let paths = fs::read_dir("./res").unwrap();
     let mut path_str = paths.filter_map(|e| e.ok()).map(|e| e.path()).filter(|e| e.is_dir()).collect::<Vec<_>>();
     path_str.sort();
 
     draw_text("Texture Packs", 2.0 * em, 2.0 * em as f32, em * 1.6, DARKGRAY);
     draw_text(format!("current texture pack: {}", user.texture).as_str(), 2.0 * em, 19.5 * em as f32, em*0.8, DARKGRAY);
-    let path = fs::canonicalize(PathBuf::from("./src/res")).unwrap();
+    let path = fs::canonicalize(PathBuf::from("./res")).unwrap();
+    
     draw_text(&format!("path: {:?}", path).as_str().replace("\\\\", "/"), 2.0 * em, 20.5 * em as f32, em*0.8, DARKGRAY);
-
     draw_text("(restart required)", 2.4 * em, 2.5 * em, em/2.0, RED);
 
     for i in 0..path_str.len() {

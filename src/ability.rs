@@ -105,6 +105,8 @@ pub enum Abilities {
     Airstrike([Coord;5]),
     WallOfFire([Coord;5]),
     Redstone,
+    ColdStorage,
+    ShortTermGains,
 }
 
 pub const FIRE_COLORS: [[f32; 4]; 5] = [
@@ -129,9 +131,19 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
             description: "Destroys pieces in a large radius anywhere on the board with a 2 move delay".to_string(),
             cost: 20,
         },
+        Abilities::ShortTermGains => AbilityMetadata {
+            name: "Crippling Debt".to_string(),
+            description: "+ 30 energy, but you have to pay it back 3 energy at a time. If you cannot you die".to_string(),
+            cost: -30,
+        },
         Abilities::Redstone => AbilityMetadata {
             name: "Redstone Powder".to_string(),
             description: "increases the duration of all active effects by 2".to_string(),
+            cost: 5,
+        },
+        Abilities::ColdStorage => AbilityMetadata {
+            name: "Cold Storage".to_string(),
+            description: "Activate ability to store 5 energy. Active a second time to get 10 energy back".to_string(),
             cost: 5,
         },
         Abilities::WallOfFire(_) => AbilityMetadata {
@@ -167,7 +179,7 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
         Abilities::Bank => AbilityMetadata {
             name: "Investment Banking".to_string(),
             description: "returns 10 energy in 5 rounds".to_string(),
-            cost: 8,
+            cost: 5,
         },
         Abilities::Blip => AbilityMetadata {
             name: "blip".to_owned(),
@@ -240,8 +252,24 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData) {
         Abilities::Bank => {
             data.effects.push((Abilities::Bank, 5.0));
         }
+        Abilities::ColdStorage => {
+            let mut retrieve = true;
+            for i in 0..data.effects.len() {
+                if data.effects[i].0 == Abilities::ColdStorage {
+                    retrieve = false;
+                    data.player.energy += 10.0;
+                    data.effects.remove(i);
+                }
+            }
+            if retrieve {
+            data.effects.push((Abilities::ColdStorage, 999.0));
+            }
+        }
         Abilities::BloodBath => {
             data.effects.push((Abilities::BloodBath, 3.0));
+        }
+        Abilities::ShortTermGains => {
+            data.effects.push((Abilities::ShortTermGains, 30.0));
         }
         Abilities::Peaceful => {
             data.effects.push((Abilities::Peaceful, 15.0));
@@ -318,6 +346,13 @@ pub fn trigger_effects(data: &mut GameData) {
                 if effect.1 == 0.0 {
                     data.alive = false;
                     }
+            }
+            Abilities::ShortTermGains => {
+                if data.player.energy >= 3.0 {
+                    data.player.energy -= 3.0;
+                }else {
+                    data.alive = false;
+                }
             }
             Abilities::Airstrike(b) => {
                 if effect.1 == 0.0 {

@@ -17,6 +17,9 @@ mod ability;
 mod key_map;
 use ::rand::prelude::*;
 use ability::*;
+use image::{open, DynamicImage};
+
+
 
 pub const GLOBAL_VERSION: u32 = 1;
 
@@ -53,7 +56,7 @@ const DEFAULT_GAME_STATE: GameData = GameData {
     effects: vec![],
     select_texture_pack: false,
     select_keybinds: false,
-    keybind_focus: -1.0,
+    keybind_focus: -3.0,
 };
 
 fn default_user_values() -> UserData {
@@ -87,13 +90,13 @@ fn vect_difference(v1: &[Enemy], v2: &[Enemy]) -> Vec<Enemy> {
 }
 
 async fn load_local_texture(id: String, user: &UserData) -> Texture2D {
-    if Path::new(&format!("./src/res/{}/{}.png", user.texture, id)).exists() {
-        load_texture(&format!("./src/res/{}/{}.png", user.texture, id))
+    if Path::new(&format!("./res/{}/{}.png", user.texture, id)).exists() {
+        load_texture(&format!("./res/{}/{}.png", user.texture, id))
             .await
             .unwrap()
     } else {
         let default_texture = "Programmer Art".to_owned();
-        load_texture(&format!("./src/res/{}/{}.png", default_texture, id))
+        load_texture(&format!("./res/{}/{}.png", default_texture, id))
             .await
             .unwrap()
     }
@@ -117,6 +120,12 @@ async fn main() {
     };
     let mut debug_mode = vec![];
     let mut god_mode = false;
+
+    // let gray = open("res/icon.png").unwrap()
+    //     .resize_exact(128, 128, FilterType::Nearest)
+    //     .into_luma8();
+    
+    // println!("{:?}", gray);
 
     let mut dsp_piece = DrawTextureParams {
         // 32x42
