@@ -23,8 +23,14 @@ use ::rand::prelude::*;
 use ability::*;
 use image::open;
 use std::convert::TryInto;
+mod audio_g;
+use audio_g::*;
 
 pub const GLOBAL_VERSION: u32 = 1;
+
+const MOVE_AUDIO_VOLUME: f32 = 0.2;
+const CLICK_SOUND_VOLUME: f32 = 0.5;
+const DING_VOLUME: f32 = 0.8;
 
 #[macro_use]
 extern crate savefile_derive;
@@ -60,6 +66,7 @@ const DEFAULT_GAME_STATE: GameData = GameData {
     select_texture_pack: false,
     select_keybinds: false,
     keybind_focus: -3.0,
+    sounds: vec![],
 };
 
 fn default_user_values() -> UserData {
@@ -93,7 +100,6 @@ fn vect_difference(v1: &[Enemy], v2: &[Enemy]) -> Vec<Enemy> {
 }
 
 async fn load_local_texture(id: String, user: &UserData) -> Texture2D {
-    println!("./res/{}/{}.png", user.texture, id);
     if Path::new(&format!("./res/{}/{}.png", user.texture, id)).exists() {
         load_texture(&format!("./res/{}/{}.png", user.texture, id))
             .await
@@ -105,6 +111,8 @@ async fn load_local_texture(id: String, user: &UserData) -> Texture2D {
             .unwrap()
     }
 }
+
+
 
 fn window_conf() -> Conf {
     Conf {
@@ -179,6 +187,11 @@ async fn main() {
     let king_texture: Texture2D = load_local_texture("king".to_owned(), &user).await;
     let mut size = 0.0;
 
+    let move_sound = load_audio("gameplay/move.wav".to_owned()).await;
+    let click_sound = load_audio("gameplay/click.wav".to_owned()).await;
+    let ding_sound = load_audio("gameplay/ding.wav".to_owned()).await;
+
+
     let mut game_data: GameData = match savefile::load_file("game_data.bin", GLOBAL_VERSION) {
         Ok(e) => e,
         Err(_) => {
@@ -221,6 +234,23 @@ async fn main() {
             save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
             user.save();
         }
+
+        for i in 0..game_data.sounds.len(){
+            let mut is_sound = true;
+            if game_data.sounds[i].0 == "click".to_owned() {
+                play_sound(
+                    click_sound,
+                    PlaySoundParams { looped: false, volume: CLICK_SOUND_VOLUME}
+                )
+            }else {
+                is_sound = false;
+            }
+            if is_sound {
+                game_data.sounds.remove(i);
+            }
+        }
+        play_sound_stack(&mut game_data).await;
+
 
         em = (screen_height() / 32.0) * 1.5;
 
@@ -311,7 +341,7 @@ async fn main() {
                 for i in 0..5 {
                     if is_key_pressed(user.ability_key[i]) {
                         let starting_pieces = game_data.enemies.clone();
-                        activate_ability(user.abilities[i], &mut game_data);
+                        activate_ability(user.abilities[i], &mut game_data, &user);
                         killed_pieces = [
                             killed_pieces,
                             vect_difference(&starting_pieces, &game_data.enemies),
@@ -320,14 +350,21 @@ async fn main() {
                     }
                 }
             }
-
-            // get user input then make move
+            //************************************************************************************************************** */
+            //--------------------------------------------- get user input then make move----------------------------------------
+            /**************************************************************************************************** */
             if !game_data.pause
                 && !selecting
                 && (player_movement(&mut game_data.player, &user) || game_data.player.sub_round > 3)
             {
                 game_data.player.sub_round += 1;
-
+                play_sound(
+                    move_sound,
+                    PlaySoundParams {
+                        looped: false,
+                        volume: MOVE_AUDIO_VOLUME
+                    }
+                );
                 let e_1 = game_data.enemies.clone();
                 game_data.enemies.retain(|e| {
                     e.x != game_data.player.target_x || e.y != game_data.player.target_y
@@ -507,15 +544,16 @@ async fn main() {
                 match game_data.effects[i].0 {
                     Abilities::Airstrike(e) => {
                         for b in e {
-                            draw_circle(
+                            draw_circle_lines(
                                 b.x * em,
                                 b.y * em,
                                 em * 3.0,
+                                em/2.0,
                                 Color {
-                                    r: 0.0,
+                                    r: 1.0,
                                     g: 0.0,
                                     b: 0.0,
-                                    a: 0.5,
+                                    a: 0.8,
                                 },
                             );
                         }
@@ -596,9 +634,10 @@ async fn main() {
                 RED,
             );
             if is_mouse_button_pressed(MouseButton::Left)
-                && (17.0..=25.0).contains(&selected_square_x)
-                && selected_square_y == 6.0
+            && (17.0..=25.0).contains(&selected_square_x)
+            && selected_square_y == 6.0
             {
+                game_data.sounds.push(("click".to_owned(), 0.0));
                 show_effects = !show_effects;
             }
             if !show_effects {
@@ -792,6 +831,9 @@ async fn main() {
                 );
                 if is_mouse_button_pressed(MouseButton::Left) {
                     if mouse_x > 15.0 && mouse_x < 18.3 && mouse_y > 9.7 && mouse_y < 10.6 {
+                        
+                        game_data.sounds.push(("click".to_owned(), 0.0));
+
                         save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
                         user.save();
                         if env::consts::OS == "linux" {
@@ -800,6 +842,7 @@ async fn main() {
                         std::process::exit(0);
                     }
                     if mouse_x > 15.0 && mouse_x < 18.3 && mouse_y > 11.7 && mouse_y < 13.6 {
+                        game_data.sounds.push(("click".to_owned(), 0.0));
                         save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
                         game_data.alive = false;
                     }
@@ -818,6 +861,8 @@ async fn main() {
                     && (0.0..=15.0).contains(&selected_square_y)
                 {
                     let starting_pieces = game_data.enemies.clone();
+                    game_data.sounds.push(("click".to_owned(), 0.0));
+
                     targeted_ability(
                         &mut game_data,
                         Coord {
@@ -868,6 +913,13 @@ async fn main() {
             }
             let startscore = game_data.score;
             for p in &killed_pieces {
+                play_sound(
+                    ding_sound,
+                    PlaySoundParams {
+                        looped: false,
+                        volume: DING_VOLUME
+                    }
+                );
                 let piece_value = match p.piece {
                     Piece::Pawn => 2.0,
                     Piece::Knight => 5.0,

@@ -173,6 +173,9 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
     if mouse_x > 2.0 && mouse_x < 3.0 && mouse_y > 19.5 && mouse_y < 20.5 {
         draw_text("<", 2.0 * em, 20.5 * em, em, LIGHTGRAY);
         if is_mouse_button_pressed(MouseButton::Left) {
+            
+            data.sounds.push(("click".to_owned(), 0.0));
+
             if data.select_ability.page > 0 {
                 data.select_ability.page -= 1;
             }
@@ -184,6 +187,8 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
         draw_text(">", 5.0 * em, 20.5 * em, em, LIGHTGRAY);
         if is_mouse_button_pressed(MouseButton::Left) {
             data.select_ability.page += 1;
+            data.sounds.push(("click".to_owned(), 0.0));
+
         }
     } else {
         draw_text(">", 5.0 * em, 20.5 * em, em, GRAY);
@@ -236,6 +241,7 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
             );
             if is_mouse_button_pressed(MouseButton::Left) {
                 user.abilities[data.select_ability.slot] = o[i];
+                data.sounds.push(("click".to_owned(), 0.0));
                 data.select_ability.open = false;
                 user.save();
             }
@@ -255,7 +261,7 @@ fn select_keybinds(data: &mut GameData, user: &mut UserData, em: f32) {
     let c = get_last_key_pressed();
         if c != None {
         if is_key_pressed(c.unwrap()) && !is_key_pressed(KeyCode::Escape){
-
+            data.sounds.push(("click".to_owned(), 0.0));
             match data.keybind_focus as usize {
                 0 => {user.up = c.unwrap()},
                 1 => {user.down = c.unwrap()},
@@ -285,6 +291,8 @@ fn select_keybinds(data: &mut GameData, user: &mut UserData, em: f32) {
             let mouse_y = mouse_position().1 / em;
             if mouse_y > ((i as f32 -1.0)*1.3 + 5.0) && mouse_y < (i as f32*1.3 + 5.0) {
                 data.keybind_focus = i as f32;
+                data.sounds.push(("click".to_owned(), 0.0));
+
             }
         }
     }
@@ -292,6 +300,8 @@ fn select_keybinds(data: &mut GameData, user: &mut UserData, em: f32) {
     if is_mouse_button_pressed(MouseButton::Left) {
     let mouse_y = mouse_position().1 / em;
     if mouse_y > (8.0*1.3 + 5.0) {
+        data.sounds.push(("click".to_owned(), 0.0));
+
         data.keybind_focus = -3.0;
     }
     }
@@ -328,6 +338,9 @@ fn select_texture(data: &mut GameData, user: &mut UserData, em: f32) {
         );
         if is_mouse_button_pressed(MouseButton::Left) {
             if mouse_position().1 > (i as f32 * em + 3.0 * em) * 1.5 && mouse_position().1 < (i as f32 * em + 3.0 * em) * 1.5 + em {
+            
+                data.sounds.push(("click".to_owned(), 0.0));
+
                 user.texture = path_str[i].to_str().unwrap().replace("./res\\", "");
                 data.select_texture_pack = false;
                 user.save();
@@ -401,6 +414,8 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
 
     if is_mouse_button_pressed(MouseButton::Left) {
         if mouse_y > 17.0 && mouse_y < 18.0 && mouse_x > 2.0 && mouse_x < 3.2 {
+            data.sounds.push(("click".to_owned(), 0.0));
+
             user.save();
             if env::consts::OS == "linux" {
                 std::process::exit(0x0100);
@@ -408,8 +423,10 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
             std::process::exit(0);
         }else if mouse_y > 16.0 && mouse_y < 17.0 && mouse_x > 2.0 && mouse_x < 6.2 {
             data.select_texture_pack = true;
+            data.sounds.push(("click".to_owned(), 0.0));
         }else if mouse_y > 14.0 && mouse_y < 15.0 && mouse_x > 2.0 && mouse_x < 6.2 {
             data.select_keybinds = true;
+            data.sounds.push(("click".to_owned(), 0.0));
         }
     }
 
@@ -436,6 +453,9 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
         && mouse_position().0 < (screen_width() / 2.0) + 3.2 * em
         {
         if is_mouse_button_pressed(MouseButton::Left) {
+                
+            data.sounds.push(("click".to_owned(), 0.0));
+
                 data.select_ability.open = true;
                 data.select_ability.slot = i;
         }

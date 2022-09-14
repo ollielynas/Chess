@@ -5,6 +5,9 @@ use crate::player::*;
 use ::rand::prelude::*;
 use macroquad::prelude::*;
 use strum_macros::EnumIter;
+use crate::audio_g::*;
+use macroquad::audio::*;
+
 
 pub fn targeted_ability(data: &mut GameData, point: Coord) {
     let player = Coord {
@@ -204,7 +207,7 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
     }
 }
 
-pub fn activate_ability(ability: Abilities, data: &mut GameData) {
+pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData) {
     if data.player.energy >= metadata(ability).cost as f32 {
         data.player.energy -= metadata(ability).cost as f32
     } else {
@@ -275,6 +278,7 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData) {
             data.effects.push((Abilities::Peaceful, 15.0));
         }
         Abilities::RBlast => {
+            data.sounds.push(("abilities/fire.wav".to_owned(), 1.0));
             let mut blast_area: Vec<Coord> = vec![];
             for i in -2..=2 {
                 for j in -2..=2 {

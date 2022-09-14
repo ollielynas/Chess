@@ -5,6 +5,8 @@ use crate::player::*;
 use ::rand::prelude::*;
 use macroquad::prelude::*;
 extern crate savefile;
+use macroquad::audio::*;
+
 
 #[derive(Debug, Copy, Clone, PartialEq, Savefile)]
 pub enum Piece {
@@ -87,6 +89,8 @@ pub struct GameData {
     pub select_keybinds: bool,
     #[savefile_ignore]
     pub keybind_focus: f32,
+    #[savefile_ignore]
+    pub sounds: Vec<(String, f32)>,
 }
 
 impl GameData {
