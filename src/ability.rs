@@ -136,12 +136,12 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
         },
         Abilities::ShortTermGains => AbilityMetadata {
             name: "Crippling Debt".to_string(),
-            description: "+ 30 energy, but you have to pay it back 3 energy at a time. If you cannot you die".to_string(),
+            description: "+ 30 energy, but you have to pay it back 2 energy at a time. If you cannot you die".to_string(),
             cost: -30,
         },
         Abilities::Redstone => AbilityMetadata {
             name: "Redstone Powder".to_string(),
-            description: "increases the duration of all active effects by 2".to_string(),
+            description: "Increases the duration of all active effects by 2".to_string(),
             cost: 5,
         },
         Abilities::ColdStorage => AbilityMetadata {
@@ -181,7 +181,7 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
         },
         Abilities::Bank => AbilityMetadata {
             name: "Investment Banking".to_string(),
-            description: "returns 10 energy in 5 rounds".to_string(),
+            description: "Returns 10 energy in 5 rounds".to_string(),
             cost: 5,
         },
         Abilities::Blip => AbilityMetadata {
