@@ -273,7 +273,7 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData
             data.effects.push((Abilities::BloodBath, 3.0));
         }
         Abilities::ShortTermGains => {
-            data.effects.push((Abilities::ShortTermGains, 30.0));
+            data.effects.push((Abilities::ShortTermGains, 15.0));
         }
         Abilities::Peaceful => {
             data.effects.push((Abilities::Peaceful, 15.0));
@@ -353,8 +353,8 @@ pub fn trigger_effects(data: &mut GameData) {
                     }
             }
             Abilities::ShortTermGains => {
-                if data.player.energy >= 3.0 {
-                    data.player.energy -= 3.0;
+                if data.player.energy >= 2.0 {
+                    data.player.energy -= 2.0;
                 }else {
                     data.alive = false;
                 }

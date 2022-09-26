@@ -5,11 +5,13 @@
 - [ ] pieces overlapping
 - [ ] horsy pathfinding off board
 - [ ] blip preventing airstrike from landing
+- [ ] effects list can leave window
 
 ## TODO
 
 - [ ] Death screen
 - [ ] Better moves indicator
+- [ ] better arrows for diagonal movements
 - [ ] tutorial
 - [ ] volume adjusters
 - [ ] home screen gui rework
