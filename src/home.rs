@@ -419,7 +419,7 @@ fn select_keybinds(data: &mut GameData, user: &mut UserData, em: f32) {
                 8 => user.ability_key[4] = c.unwrap(),
                 _ => {}
             }
-            data.keybind_focus = -3.0
+            data.keybind_focus = 99.0
         }
     }
 
@@ -470,7 +470,7 @@ fn select_keybinds(data: &mut GameData, user: &mut UserData, em: f32) {
         if mouse_y > (8.0 * 1.3 + 5.0) {
             data.sounds.push(("click".to_owned(), 0.0));
 
-            data.keybind_focus = -3.0;
+            data.keybind_focus = 99.0;
         }
     }
 }

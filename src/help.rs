@@ -1,19 +1,45 @@
 use std::fmt::format;
 
-use crate::game_data::GameData;
+use crate::{game_data::GameData, home::*};
 use macroquad::prelude::*;
 
 pub fn draw_icons(data: &GameData, em: f32) {
     draw_icon(
         screen_width() - 0.7*em, 20.65*em, 
-        "Hover over a blue help icon if you are not sure what to do. To toggle help icons press this help icon".to_owned(),
+        "Hover over a blue help icon if you are not sure what to do. To toggle help icons press this question mark ".to_owned(),
         em
     );
-    draw_icon(
-        0.7*em, 2.65*em, 
-        "Hover over a help icon if you are not sure what to do. To toggle help icons press this help icon".to_owned(),
-        em
-    )
+
+    match data.screen {
+        Screen::Home => {
+        },
+        Screen::AbilitiesScreen => {
+
+        },
+        Screen::Game => {
+
+        },
+        Screen::Keybinds => {
+            draw_icon(
+                20.0*em, 5.0*em,
+"To rebind a key click on an action (shown in the left). 
+Once it turns blue that means you have selected an action to be rebound. 
+To rebind the action press the desired key. If you do not want to rebind the key click somewhere near 
+the bottom of the screen. Press escape to save your choices".to_owned(),
+                em
+            );
+        },
+        Screen::Settings => {
+
+        },
+        Screen::Death => {
+
+        },
+        Screen::Textures => {
+
+        }
+    }
+
 }
 
 fn draw_icon(x:f32, y:f32, txt: String, em: f32) {
@@ -48,15 +74,18 @@ fn draw_icon(x:f32, y:f32, txt: String, em: f32) {
             _ => 0.0
         };
         let offset_y  = match y {
-            y if y > screen_height()/2.0 => em*1.0 + em * text.len() as f32 * 0.7,
+            y if y > screen_height()/2.0 => (em*1.0 + em * text.len() as f32 * 0.7) *-1.0,
             _ => 0.0
         };
+
         
         draw_rectangle (
-            x,y, 
-            em*13.5 + offset_x, 
-            em*1.0 + em * text.len() as f32 * 0.7 + offset_y,
-            WHITE
+            x+ offset_x,y+ offset_y, 
+            em*13.5 , 
+            em*1.0 + em * text.len() as f32 * 0.7 ,
+            Color::from_rgba(
+                180,180,180,250
+            )
         );
         
         for i in 0..text.len() {

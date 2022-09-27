@@ -65,7 +65,7 @@ pub const DEFAULT_GAME_STATE: GameData = GameData {
     score: 0.0,
     score_text: vec![],
     effects: vec![],
-    keybind_focus: -3.0,
+    keybind_focus: -99.0,
     sounds: vec![],
     screen: Screen::Home,
 };
@@ -288,9 +288,7 @@ async fn main() {
                                                             d"     YD                                                               
                                                             "Y88888P'                                                               
 */
-        if user.help_bubbles {
-            draw_icons(&game_data, em);
-        }
+
 
         draw_text(
             "?",
@@ -1155,7 +1153,9 @@ o88o     o8888o  `Y8bod8P' o888o o888o o888o   "888"     .8'          `bodP'`88.
             }
 
             // select a square
-
+        if user.help_bubbles {
+            draw_icons(&game_data, em);
+        }
             size = em;
             next_frame().await
         }
