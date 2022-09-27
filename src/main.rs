@@ -313,7 +313,8 @@ async fn main() {
         }
 
         if debug_mode == ["up", "down", "left", "right", "b", "a"] {
-            draw_text("debug_mode", em * 1.0, em * 20.0, em, WHITE);
+            draw_text(&format!("debug_mode      {} {}",mouse_position().0/em, mouse_position().1/em),
+             em * 1.0, em * 20.0, em, WHITE);
             if god_mode {
                 draw_text("god_mode", em * 1.0, em * 21.0, em, WHITE);
             }
@@ -331,7 +332,9 @@ async fn main() {
         // when player dies or start new game
         if game_data.screen != Screen::Game{
             display_home(em, &mut user, &mut game_data);
-            if debug_mode.len() == 6 {}
+            if user.help_bubbles {
+            draw_icons(&game_data, em);
+        }
             next_frame().await;
         } else {
             // chose to display home or game

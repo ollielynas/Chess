@@ -36,8 +36,21 @@ the bottom of the screen. Press escape to save your choices".to_owned(),
 
         },
         Screen::Textures => {
+    draw_icon(
+        21.0*em, 4.0*em, 
+        "This is a list of all the texture pack folders in the res folder.
+To select a texture pack simply click on the name an then close the game and re-open it.".to_owned(),
+        em
+    );
+    draw_icon(
+        21.0*em, 4.0*em, 
+        "this is the directory where you will find the texture pack folders".to_owned(),
+        em
+    );
+}
 
-        }
+
+
     }
 
 }
