@@ -241,7 +241,7 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData
             };
         }
         Abilities::Blip => {
-            data.sounds.push(("abilities/warp.wav".to_owned(), 1.0));
+            data.sounds.push(("abilities/warp.wav".to_owned(), 0.4));
             for _ in 0..5 {
                 data.spawn_enemy(true);
             }

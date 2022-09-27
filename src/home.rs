@@ -1,9 +1,10 @@
+use crate::DEFAULT_GAME_STATE;
 use crate::ability::*;
 use crate::game_data::*;
 use crate::key_map::*;
-use crate::particles_fnc::*;
+// use crate::particles_fnc::*;
 use crate::GLOBAL_VERSION;
-use ::rand::prelude::*;
+// use ::rand::prelude::*;
 use macroquad::prelude::*;
 use savefile::prelude::*;
 use std::env;
@@ -15,7 +16,6 @@ use strum_macros::EnumIter; // 0.17.1
 fn key_as_string(key: KeyCode) -> String {
     format!("{:?}", key)
 }
-
 fn string_to_key(key: &String) -> KeyCode {
     for i in KEYS_TEXT {
         if &key_as_string(i) == key {
@@ -23,6 +23,16 @@ fn string_to_key(key: &String) -> KeyCode {
         }
     }
     return KeyCode::Unknown;
+}
+#[derive(Savefile, PartialEq)]
+pub enum Screen {
+    Game,
+    Home,
+    Settings,
+    Keybinds,
+    Textures,
+    Death,
+    AbilitiesScreen,
 }
 
 #[derive(Debug, Clone)]
@@ -36,6 +46,7 @@ pub struct UserData {
     pub texture: String,
     pub high_score: f32,
     pub high_round: f32,
+    pub help_bubbles: bool
 }
 
 #[derive(Savefile)]
@@ -44,6 +55,7 @@ struct OtherUserData {
     texture: String,
     high_score: f32,
     high_round: f32,
+    help_bubbles: bool
 }
 
 impl UserData {
@@ -100,6 +112,7 @@ impl UserData {
             abilities: self.abilities,
             high_round: self.high_round,
             high_score: self.high_score,
+            help_bubbles: self.help_bubbles
         };
 
         save_file("keybinds.bin", GLOBAL_VERSION, &keys).unwrap();
@@ -132,9 +145,16 @@ impl UserData {
     }
 }
 
+fn new_game() -> GameData {
+    let mut data = DEFAULT_GAME_STATE;
+    data.alive = true;
+    data
+}
+
 fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
     if is_key_pressed(KeyCode::Escape) {
         data.select_ability.open = false;
+        data.screen = Screen::Home;
     }
 
     let mut o: Vec<Abilities> = Abilities::iter().collect();
@@ -161,10 +181,9 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
         DARKGRAY,
     );
 
-    
     let mouse_y = mouse_position().1 / em;
     let mouse_x = mouse_position().0 / em;
-    
+
     draw_rectangle(
         1.0 * em,
         (1.0) * em,
@@ -172,40 +191,30 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
         em * 30.0,
         Color::from_rgba(10, 10, 10, 255),
     );
-    
+
     draw_rectangle(
         2.0 * em,
         12.0 * em,
-        em * 2.15,
+        em * 4.75,
         em * 1.1,
-        Color::from_rgba(50, 50, 50, 255),
+        Color::from_rgba(250, 10, 10, 255),
     );
 
-    draw_text(
-        "Save",
-        2.2 * em,
-        12.8 * em,
-        em,
-        WHITE
-    );
-
-    draw_text(
-        "Abilities",
-        2.2 * em,
-        2.7 * em,
-        em * 2.0,
-        WHITE
-    );
+    
+    draw_text("Abilities", 2.2 * em, 2.7 * em, em * 2.0, WHITE);
+    
+    if mouse_x > 2.0 && mouse_x < 6.75 && mouse_y > 12.0 && mouse_y < 13.1 {
+        draw_text("Start Game", 2.2 * em, 12.8 * em, em, ORANGE);
 
     if is_mouse_button_pressed(MouseButton::Left) {
-    if mouse_x > 2.0 
-    && mouse_x < 4.15 
-    && mouse_y > 12.0
-    && mouse_y < 13.0 {
-        data.sounds.push(("click".to_owned(), 0.0));
-        data.select_ability.open = false;
-        
-    }
+            data.sounds.push(("click".to_owned(), 0.0));
+                        if !data.alive {
+                            *data = new_game();
+            }
+            data.screen = Screen::Game;
+        }
+    }else {
+        draw_text("Start Game", 2.2 * em, 12.8 * em, em, WHITE);
     }
 
     for f in 0..5 {
@@ -219,24 +228,20 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
         );
 
         if is_mouse_button_pressed(MouseButton::Left) {
-            if mouse_x > 2.0 
-            && mouse_x < 11.5 
-            && mouse_y > (4.4 + i)
-            && mouse_y < (4.4 + i) + 1.1 {
+            if mouse_x > 2.0 && mouse_x < 11.5 && mouse_y > (4.4 + i) && mouse_y < (4.4 + i) + 1.1 {
                 data.select_ability.slot = f;
                 data.sounds.push(("click".to_owned(), 0.0));
             }
-
         }
 
         if data.select_ability.slot == f {
-                draw_rectangle(
-            2.0 * em,
-            (4.4 + i) * em,
-            em * 9.5,
-            em * 1.1,
-            Color::from_rgba(35, 35, 215, 215),
-        );
+            draw_rectangle(
+                2.0 * em,
+                (4.4 + i) * em,
+                em * 9.5,
+                em * 1.1,
+                Color::from_rgba(35, 35, 215, 215),
+            );
         }
 
         draw_text(
@@ -256,12 +261,12 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
         );
 
         draw_text(
-        &metadata(user.abilities[f]).name,
-        2.3 * em,
-        (i + 5.0) * em,
-        em * 0.8,
-        WHITE,
-    );
+            &metadata(user.abilities[f]).name,
+            2.1  * em,
+            (i + 5.0) * em,
+            em * 0.8,
+            WHITE,
+        );
     }
 
     // nav arrows
@@ -358,10 +363,21 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
     }
 }
 
+/*oooo    oooo                        .o8        o8o                    .o8           
+`888   .8P'                        "888        `"'                   "888           
+ 888  d8'     .ooooo.  oooo    ooo  888oooo.  oooo  ooo. .oo.    .oooo888   .oooo.o 
+ 88888[      d88' `88b  `88.  .8'   d88' `88b `888  `888P"Y88b  d88' `888  d88(  "8 
+ 888`88b.    888ooo888   `88..8'    888   888  888   888   888  888   888  `"Y88b.  
+ 888  `88b.  888    .o    `888'     888   888  888   888   888  888   888  o.  )88b 
+o888o  o888o `Y8bod8P'     .8'      `Y8bod8P' o888o o888o o888o `Y8bod88P" 8""888P' 
+                    ---.o..P'                                                       
+                    ---`Y8P'                                                        
+*/
+
 fn select_keybinds(data: &mut GameData, user: &mut UserData, em: f32) {
     if is_key_pressed(KeyCode::Escape) {
         user.save();
-        data.select_keybinds = false;
+        data.screen = Screen::Home;
     }
     draw_text("Keybinds", 2.0 * em, 2.0 * em as f32, em * 1.6, DARKGRAY);
     let keys = [
@@ -459,9 +475,20 @@ fn select_keybinds(data: &mut GameData, user: &mut UserData, em: f32) {
     }
 }
 
+
+/*
+ooooooooooooo                           .                                  
+8'   888   `8                         .o8                                  
+     888       .ooooo.  oooo    ooo .o888oo oooo  oooo  oooo d8b  .ooooo.  
+     888      d88' `88b  `88b..8P'    888   `888  `888  `888""8P d88' `88b 
+     888      888ooo888    Y888'      888    888   888   888     888ooo888 
+     888      888    .o  .o8"'88b     888 .  888   888   888     888    .o 
+    o888o     `Y8bod8P' o88'   888o   "888"  `V88V"V8P' d888b    `Y8bod8P' 
+*/
+
 fn select_texture(data: &mut GameData, user: &mut UserData, em: f32) {
     if is_key_pressed(KeyCode::Escape) {
-        data.select_texture_pack = false;
+        data.screen = Screen::Home;
     }
     if fs::read_dir("./res").is_err() {
         draw_text(
@@ -480,6 +507,7 @@ fn select_texture(data: &mut GameData, user: &mut UserData, em: f32) {
         .filter(|e| e.is_dir())
         .collect::<Vec<_>>();
     path_str.sort();
+    path_str.retain(|f| f.to_str().unwrap().replace("./res\\", "") != "audio");
 
     draw_text(
         "Texture Packs",
@@ -522,7 +550,7 @@ fn select_texture(data: &mut GameData, user: &mut UserData, em: f32) {
                 data.sounds.push(("click".to_owned(), 0.0));
 
                 user.texture = path_str[i].to_str().unwrap().replace("./res\\", "");
-                data.select_texture_pack = false;
+                data.screen = Screen::Home;
                 user.save();
             }
         }
@@ -530,111 +558,98 @@ fn select_texture(data: &mut GameData, user: &mut UserData, em: f32) {
 }
 
 pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
-    if data.select_ability.open {
+    if data.screen == Screen::AbilitiesScreen {
         select_ability(data, user, em);
         return;
     }
-    if data.select_texture_pack {
+    if data.screen == Screen::Textures {
         select_texture(data, user, em);
         return;
     }
-    if data.select_keybinds {
+    if data.screen == Screen::Keybinds {
         select_keybinds(data, user, em);
         return;
     }
 
-    draw_text(
-        "Press enter to start...",
-        screen_width() - 12.0 * (5.0 + em * 0.7),
-        21.0 * em,
-        5.0 + em * 0.7,
-        DARKGREEN,
-    );
 
-    draw_text("Bare King", 1.0 * em, 3.0 * em, em * 3.0, DARKGREEN);
+    draw_text("Bare King", screen_width()/2.0 - 6.0 * em, 4.0 * em, em * 3.0, DARKGREEN);
 
-    draw_text("Last Round", em * 24.0, 3.5 * em, em * 1.3, GRAY);
-    draw_text("Round: ", em * 24.0, 5.0 * em, em, GRAY);
-    draw_text(&format!("{}", data.round), em * 27.0, 5.0 * em, em, RED);
+    let mouse_y = mouse_position().1;
+    let mouse_x = mouse_position().0;
 
-    draw_text(
-        &format!("Score: {}", (data.score * 100.0).round() / 100.0),
-        em * 24.0,
-        6.0 * em,
-        em,
-        GOLD,
-    );
+    let start = match data.alive {
+            true => "Resume",
+            false => "New Game"
+    };
 
-    draw_text("High Score", em * 24.0, 8.0 * em, em * 1.3, GRAY);
-    draw_text("Round: ", em * 24.0, 9.5 * em, em, GRAY);
-    draw_text(
-        &format!("{}", user.high_round),
-        em * 27.0,
-        9.5 * em,
-        em,
-        RED,
-    );
+    let new_game_tax = match data.alive {
+            true => 0.0,
+            false => 0.5*em
+    };
 
-    draw_text(
-        &format!("Score: {}", (user.high_score * 100.0).round() / 100.0),
-        em * 24.0,
-        10.5 * em,
-        em,
-        GOLD,
-    );
+    draw_text(start, screen_width()/2.0 - 1.6 * em - new_game_tax, 10.0 * em, em*1.2, LIGHTGRAY);
+    draw_text("Keybinds", screen_width()/2.0 - 2.1  * em, 12.0 * em, em*1.2, LIGHTGRAY);
+    draw_text("Textures", screen_width()/2.0 - 2.1  * em, 14.0 * em, em*1.2, LIGHTGRAY);
+    draw_text("Quit", screen_width()/2.0 - 1.1 * em, 16.0 * em, em, RED);
 
-    let mouse_y = mouse_position().1 / em;
-    let mouse_x = mouse_position().0 / em;
 
-    draw_text("keybinds", em * 2.0, 15.0 * em, em, LIGHTGRAY);
-    draw_text("textures", em * 2.0, 16.5 * em, em, LIGHTGRAY);
-    draw_text("Quit", em * 2.0, 18.0 * em, em, RED);
 
-    if is_mouse_button_pressed(MouseButton::Left) {
-        if mouse_y > 17.0 && mouse_y < 18.0 && mouse_x > 2.0 && mouse_x < 3.2 {
-            data.sounds.push(("click".to_owned(), 0.0));
-
-            user.save();
-            if env::consts::OS == "linux" {
-                std::process::exit(0x0100);
-            }
-            std::process::exit(0);
-        } else if mouse_y > 16.0 && mouse_y < 17.0 && mouse_x > 2.0 && mouse_x < 6.2 {
-            data.select_texture_pack = true;
-            data.sounds.push(("click".to_owned(), 0.0));
-        } else if mouse_y > 14.0 && mouse_y < 15.0 && mouse_x > 2.0 && mouse_x < 6.2 {
-            data.select_keybinds = true;
-            data.sounds.push(("click".to_owned(), 0.0));
+        if  mouse_x > screen_width()/2.0 - 1.6  * em - new_game_tax &&
+            mouse_x < screen_width()/2.0 + 1.6  * em + new_game_tax &&
+            mouse_y < 10.0*em &&
+            mouse_y > 10.0*em - 1.2 * em
+                {
+                draw_text(start, screen_width()/2.0 - 1.6 * em - new_game_tax, 10.0 * em , em*1.2, WHITE);
+                if is_mouse_button_pressed(MouseButton::Left) { 
+                    data.sounds.push(("click".to_owned(), 0.0));
+                    if data.alive {
+                        data.screen = Screen::Game;
+                    }else {
+                        data.screen = Screen::AbilitiesScreen;
+                    }
+                }
         }
-    }
-
-    for i in 0..5 {
-        draw_text(
-            &(format!("{}.) ", i + 1) + metadata(user.abilities[i]).name.as_str()),
-            1.0 * em,
-            (6.5 + i as f32) * em,
-            4.0 + em,
-            GRAY,
-        );
-        draw_text(
-            "Pick New",
-            screen_width() / 2.0 - em,
-            (6.5 + i as f32) * em,
-            em,
-            ORANGE,
-        );
-
-        if mouse_y > 5.5 + i as f32
-            && mouse_y < 6.5 + i as f32
-            && mouse_position().0 > em
-            && mouse_position().0 < (screen_width() / 2.0) + 3.2 * em
-        {
-            if is_mouse_button_pressed(MouseButton::Left) {
-                data.sounds.push(("click".to_owned(), 0.0));
-
-                data.select_ability.open = true;
-                data.select_ability.slot = i;
-            }
+    
+        if  mouse_x > screen_width()/2.0 - 2.1  * em &&
+            mouse_x < screen_width()/2.0 + 2.1  * em &&
+            mouse_y < 12.0*em &&
+            mouse_y > 12.0*em - 1.2 * em
+                {
+                draw_text("Keybinds", screen_width()/2.0 - 2.1  * em, 12.0 * em, em*1.2, WHITE);
+                if is_mouse_button_pressed(MouseButton::Left) { 
+                    data.screen = Screen::Keybinds;
+                    data.sounds.push(("click".to_owned(), 0.0));
+                }
         }
-    }
+
+        if  mouse_x > screen_width()/2.0 - 2.1  * em &&
+            mouse_x < screen_width()/2.0 + 2.1  * em &&
+            mouse_y < 14.0*em &&
+            mouse_y > 14.0*em - 1.2 * em
+                {
+                draw_text("Textures", screen_width()/2.0 - 2.1  * em, 14.0 * em, em*1.2, WHITE);
+                if is_mouse_button_pressed(MouseButton::Left) { 
+                    data.screen = Screen::Textures;
+                    data.sounds.push(("click".to_owned(), 0.0));
+                }
+        }
+    
+        
+        if  mouse_x > screen_width()/2.0 - 1.1  * em &&
+            mouse_x < screen_width()/2.0 + 1.1  * em &&
+            mouse_y < 16.0*em &&
+            mouse_y > 16.0*em - 1.2 * em
+                {
+                if is_mouse_button_pressed(MouseButton::Left) { 
+                    data.sounds.push(("click".to_owned(), 0.0));
+                    user.save();
+                    if env::consts::OS == "linux" {
+                        std::process::exit(0x0100);
+                    }
+                    std::process::exit(0);
+                }
+        }
+
+
+
 }

@@ -4,7 +4,7 @@ use crate::player::*;
 use ::rand::prelude::*;
 use macroquad::prelude::*;
 extern crate savefile;
-
+use crate::home::*;
 
 #[derive(Debug, Copy, Clone, PartialEq, Savefile)]
 pub enum Piece {
@@ -82,13 +82,10 @@ pub struct GameData {
     pub score_text: Vec<TextReadout>,
     pub effects: Vec<(Abilities, f32)>,
     #[savefile_ignore]
-    pub select_texture_pack: bool,
-    #[savefile_ignore]
-    pub select_keybinds: bool,
-    #[savefile_ignore]
     pub keybind_focus: f32,
     #[savefile_ignore]
     pub sounds: Vec<(String, f32)>,
+    pub screen: Screen
 }
 
 impl GameData {

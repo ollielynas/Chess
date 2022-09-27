@@ -25,6 +25,8 @@ use image::open;
 use std::convert::TryInto;
 mod audio_g;
 use audio_g::*;
+mod help;
+use help::*;
 
 pub const GLOBAL_VERSION: u32 = 1;
 
@@ -35,7 +37,7 @@ const DING_VOLUME: f32 = 0.8;
 #[macro_use]
 extern crate savefile_derive;
 
-const DEFAULT_GAME_STATE: GameData = GameData {
+pub const DEFAULT_GAME_STATE: GameData = GameData {
     player: Player {
         x: 8.0,
         y: 8.0,
@@ -63,11 +65,13 @@ const DEFAULT_GAME_STATE: GameData = GameData {
     score: 0.0,
     score_text: vec![],
     effects: vec![],
-    select_texture_pack: false,
-    select_keybinds: false,
     keybind_focus: -3.0,
     sounds: vec![],
+    screen: Screen::Home,
 };
+
+
+
 
 fn default_user_values() -> UserData {
     UserData {
@@ -92,6 +96,7 @@ fn default_user_values() -> UserData {
         texture: "fonky-monky".to_owned(),
         high_round: 0.0,
         high_score: 0.0,
+        help_bubbles: true
     }
 }
 
@@ -201,6 +206,8 @@ async fn main() {
         }
     };
 
+    game_data.screen = Screen::Home;
+
     let music_sound = load_audio("music/background_1.wav".to_owned()).await;
 
     play_sound(
@@ -233,6 +240,7 @@ async fn main() {
                 debug_mode.push("a");
             }
         }
+
 
         if is_quit_requested() {
             save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
@@ -269,6 +277,36 @@ async fn main() {
         // change piece and square sizes of em has changed
 
         clear_background(BLACK);
+/*
+    --.oooooo..o               .       .    o8o                                       ooooo                                          
+    -d8P'    `Y8             .o8     .o8    `"'                                       `888'                                          
+    -Y88bo.       .ooooo.  .o888oo .o888oo oooo  ooo. .oo.    .oooooooo  .oooo.o       888   .ooooo.   .ooooo.  ooo. .oo.    .oooo.o 
+    --`"Y8888o.  d88' `88b   888     888   `888  `888P"Y88b  888' `88b  d88(  "8       888  d88' `"Y8 d88' `88b `888P"Y88b  d88(  "8 
+    --    `"Y88b 888ooo888   888     888    888   888   888  888   888  `"Y88b.        888  888       888   888  888   888  `"Y88b.  
+    -oo     .d8P 888    .o   888 .   888 .  888   888   888  `88bod8P'  o.  )88b       888  888   .o8 888   888  888   888  o.  )88b 
+    -8""88888P'  `Y8bod8P'   "888"   "888" o888o o888o o888o `8oooooo.  8""888P'      o888o `Y8bod8P' `Y8bod8P' o888o o888o 8""888P' 
+                                                            d"     YD                                                               
+                                                            "Y88888P'                                                               
+*/
+        if user.help_bubbles {
+            draw_icons(&game_data, em);
+        }
+
+        draw_text(
+            "?",
+            screen_width() - 1.0*em,
+            21.0*em,
+            em*0.6,
+            WHITE
+        );
+        if is_mouse_button_pressed(MouseButton::Left) {
+            if mouse_position().0 > screen_width() - 1.0*em
+            && mouse_position().0 < screen_width() + 0.4*em
+            && mouse_position().1 > 20.6 *em {
+                user.help_bubbles = !user.help_bubbles;
+            }
+        }
+
 
         if is_key_pressed(KeyCode::Escape) {
             game_data.pause = !game_data.pause;
@@ -293,19 +331,19 @@ async fn main() {
         }
 
         // when player dies or start new game
-        if !game_data.alive {
+        if game_data.screen != Screen::Game{
             display_home(em, &mut user, &mut game_data);
             if debug_mode.len() == 6 {}
-            if is_key_pressed(KeyCode::Enter) {
-                game_data = DEFAULT_GAME_STATE;
-                game_data.alive = true;
-            }
             next_frame().await;
         } else {
             // chose to display home or game
 
             let selected_square_x = (mouse_x - 1.5).round();
             let selected_square_y = (mouse_y - 1.5).round();
+
+            if !game_data.alive {
+                game_data.screen = Screen::Home;
+            }
 
             // draw board
             for i in 0..16 {
@@ -950,7 +988,7 @@ o88o     o8888o  `Y8bod8P' o888o o888o o888o   "888"     .8'          `bodP'`88.
                     if mouse_x > 15.0 && mouse_x < 18.3 && mouse_y > 11.7 && mouse_y < 13.6 {
                         game_data.sounds.push(("click".to_owned(), 0.0));
                         save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
-                        game_data.alive = false;
+                        game_data.screen = Screen::Home;
                     }
                 }
             }
