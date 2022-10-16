@@ -12,6 +12,7 @@ use std::fs;
 use std::path::PathBuf;
 use strum::IntoEnumIterator; // 0.17.1
 use strum_macros::EnumIter; // 0.17.1
+use crate::death::*;
 
 fn key_as_string(key: KeyCode) -> String {
     format!("{:?}", key)
@@ -557,6 +558,16 @@ fn select_texture(data: &mut GameData, user: &mut UserData, em: f32) {
     }
 }
 
+/*
+ooooo   ooooo                                       
+`888'   `888'                                       
+.888     888   .ooooo.  ooo. .oo.  .oo.    .ooooo.  
+.888ooooo888  d88' `88b `888P"Y88bP"Y88b  d88' `88b 
+.888     888  888   888  888   888   888  888ooo888 
+.888     888  888   888  888   888   888  888    .o 
+o888o   o888o `Y8bod8P' o888o o888o o888o `Y8bod8P' 
+*/
+
 pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
     if data.screen == Screen::AbilitiesScreen {
         select_ability(data, user, em);
@@ -568,6 +579,10 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
     }
     if data.screen == Screen::Keybinds {
         select_keybinds(data, user, em);
+        return;
+    }
+        if data.screen == Screen::Death {
+        draw_death_screen(data, user, em);
         return;
     }
 

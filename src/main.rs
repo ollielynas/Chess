@@ -27,6 +27,8 @@ mod audio_g;
 use audio_g::*;
 mod help;
 use help::*;
+mod death;
+use death::*;
 
 pub const GLOBAL_VERSION: u32 = 1;
 
@@ -343,7 +345,7 @@ async fn main() {
             let selected_square_y = (mouse_y - 1.5).round();
 
             if !game_data.alive {
-                game_data.screen = Screen::Home;
+                game_data.screen = Screen::Death;
             }
 
             // draw board
@@ -401,6 +403,19 @@ async fn main() {
                     }
                 }
             }
+
+/*
+ooooooooo.   oooo                                                ooo        ooooo                                 
+`888   `Y88. `888                                                `88.       .888'                                 
+ 888   .d88'  888   .oooo.   oooo    ooo  .ooooo.  oooo d8b       888b     d'888   .ooooo.  oooo    ooo  .ooooo.  
+ 888ooo88P'   888  `P  )88b   `88.  .8'  d88' `88b `888""8P       8 Y88. .P  888  d88' `88b  `88.  .8'  d88' `88b 
+ 888          888   .oP"888    `88..8'   888ooo888  888           8  `888'   888  888   888   `88..8'   888ooo888 
+ 888          888  d8(  888     `888'    888    .o  888           8    Y     888  888   888    `888'    888    .o 
+o888o        o888o `Y888""8o     .8'     `Y8bod8P' d888b         o8o        o888o `Y8bod8P'     `8'     `Y8bod8P' 
+-                            .o..P'
+-                            `Y8P'
+*/
+
             //************************************************************************************************************** */
             //--------------------------------------------- get user input then make move----------------------------------------
             /**************************************************************************************************** */
@@ -420,11 +435,11 @@ async fn main() {
                 game_data.enemies.retain(|e| {
                     e.x != game_data.player.target_x || e.y != game_data.player.target_y
                 });
-
-                if !vect_difference(&e_1, &game_data.enemies).is_empty() {
-                    killed_pieces.push(vect_difference(&e_1, &game_data.enemies)[0].clone());
+                let killed =  vect_difference(&e_1, &game_data.enemies);
+                for j in killed {
+                    killed_pieces.push(j.clone());
                     game_data.player.energy +=
-                        match vect_difference(&e_1, &game_data.enemies)[0].piece {
+                        match &j.piece {
                             Piece::Pawn => 1.0,
                             Piece::Rook => 2.0,
                             Piece::Knight => 2.0,

@@ -12,6 +12,11 @@ pub fn draw_icons(data: &GameData, em: f32) {
 
     match data.screen {
         Screen::Home => {
+        //     draw_icon(
+        // 4.0*em, 2.0*em, 
+        // "line 1\\line 2 ".to_owned(),
+        // em
+        // );
         },
         Screen::AbilitiesScreen => {
 
@@ -37,14 +42,14 @@ the bottom of the screen. Press escape to save your choices".to_owned(),
         },
         Screen::Textures => {
     draw_icon(
-        21.0*em, 4.0*em, 
+        1.9*em, 4.0*em, 
         "This is a list of all the texture pack folders in the res folder.
 To select a texture pack simply click on the name an then close the game and re-open it.".to_owned(),
         em
     );
     draw_icon(
-        21.0*em, 4.0*em, 
-        "this is the directory where you will find the texture pack folders".to_owned(),
+        4.0*em, 20.0*em, 
+        "This is the directory where you will find the texture pack folders".to_owned(),
         em
     );
 }
@@ -80,6 +85,14 @@ fn draw_icon(x:f32, y:f32, txt: String, em: f32) {
                 }
             }
             if valid {break}
+        }
+        for i in 0..text.len() {
+                let a = text[i].split(|f| f == &'\\').collect::<Vec<_>>();
+                let b = a.iter().map(|&x| x.to_owned()).collect::<Vec<_>>();
+                text[i] = b[0].clone();
+                if b.len() != 1 {
+                    text.insert(i+1, b[1].clone());
+                }
         }
 
         let offset_x  = match x {

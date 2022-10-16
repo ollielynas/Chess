@@ -335,6 +335,17 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData
     }
 }
 
+/*
+ooooooooooooo           o8o                                                           .o88o.  .o88o.                         .            
+8'   888   `8           `"'                                                           888 `"  888 `"                       .o8            
+-    888      oooo d8b oooo   .oooooooo  .oooooooo  .ooooo.  oooo d8b       .ooooo.  o888oo  o888oo   .ooooo.   .ooooo.  .o888oo  .oooo.o 
+-    888      `888""8P `888  888' `88b  888' `88b  d88' `88b `888""8P      d88' `88b  888     888    d88' `88b d88' `"Y8   888   d88(  "8 
+-    888       888      888  888   888  888   888  888ooo888  888          888ooo888  888     888    888ooo888 888         888   `"Y88b.  
+-    888       888      888  `88bod8P'  `88bod8P'  888    .o  888          888    .o  888     888    888    .o 888   .o8   888 . o.  )88b 
+    o888o     d888b    o888o `8oooooo.  `8oooooo.  `Y8bod8P' d888b         `Y8bod8P' o888o   o888o   `Y8bod8P' `Y8bod8P'   "888" 8""888P' 
+-                            d"     YD  d"     YD                                                                                         
+-                            "Y88888P'  "Y88888P'                                                                                         
+*/
 
 pub fn trigger_effects(data: &mut GameData) {
     for effect in &mut data.effects {
