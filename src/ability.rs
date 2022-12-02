@@ -110,6 +110,7 @@ pub enum Abilities {
     Redstone,
     ColdStorage,
     ShortTermGains,
+    Dope,
 }
 
 pub const FIRE_COLORS: [[f32; 4]; 5] = [
@@ -199,6 +200,11 @@ pub fn metadata(a: Abilities) -> AbilityMetadata {
             description: "can be shot at any angle, kills everything in its path".to_owned(),
             cost: 15,
         },
+        Abilities::Dope => AbilityMetadata {
+            name: "Dope".to_owned(),
+            description: "Get +1 max energy for every passive effect active".to_owned(),
+            cost: 10,
+        },
         _ => AbilityMetadata {
             name: "no ability selected".to_owned(),
             description: "no ability has been selected".to_owned(),
@@ -246,10 +252,10 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData
                 data.spawn_enemy(true);
             }
             for effect in &mut data.effects {
-                if effect.1  <= 2.0 {
-                    effect.1 = 2.0;
-                }
                 effect.1 -= 2.0;
+                if effect.1 < 0.0 {
+                    effect.1 = 0.0
+                }
             }
             data.player.sub_round += 5;
         }
@@ -266,7 +272,7 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData
                 }
             }
             if retrieve {
-            data.effects.push((Abilities::ColdStorage, 999.0));
+            data.effects.push((Abilities::ColdStorage, 9999.0));
             }
         }
         Abilities::BloodBath => {
@@ -277,6 +283,9 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData
         }
         Abilities::Peaceful => {
             data.effects.push((Abilities::Peaceful, 15.0));
+        }
+        Abilities::Dope => {
+            data.effects.push((Abilities::Dope, 9999.0));
         }
         Abilities::RBlast => {
             data.sounds.push(("abilities/fire.wav".to_owned(), 1.0));
@@ -351,7 +360,7 @@ pub fn trigger_effects(data: &mut GameData) {
     for effect in &mut data.effects {
         match effect.0 {
             Abilities::Bank => {
-                if effect.1 == 0.0 {
+                if effect.1 <= 0.0 {
                     data.player.energy += 10.0;
                     if data.player.energy > 30.0 {
                         data.player.energy = 30.0;
@@ -359,9 +368,12 @@ pub fn trigger_effects(data: &mut GameData) {
                 }
             },
             Abilities::Martyrdom => {
-                if effect.1 == 0.0 {
+                if effect.1 <= 0.0 {
                     data.alive = false;
                     }
+            }
+            Abilities::Dope => {
+                
             }
             Abilities::ShortTermGains => {
                 if data.player.energy >= 2.0 {
@@ -371,7 +383,7 @@ pub fn trigger_effects(data: &mut GameData) {
                 }
             }
             Abilities::Airstrike(b) => {
-                if effect.1 == 0.0 {
+                if effect.1 <= 0.0 {
                     for i in b {
                         data.enemies.retain(|f| ((f.x-i.x).powi(2) + (f.y-i.y).powi(2)).powf(0.5) > 3.0);
                     }

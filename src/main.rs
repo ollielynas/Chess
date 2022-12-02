@@ -29,6 +29,7 @@ mod help;
 use help::*;
 mod death;
 use death::*;
+use enigo::Enigo;
 
 pub const GLOBAL_VERSION: u32 = 1;
 
@@ -70,10 +71,8 @@ pub const DEFAULT_GAME_STATE: GameData = GameData {
     keybind_focus: -99.0,
     sounds: vec![],
     screen: Screen::Home,
+    max_energy: 30.0,
 };
-
-
-
 
 fn default_user_values() -> UserData {
     UserData {
@@ -95,15 +94,19 @@ fn default_user_values() -> UserData {
             KeyCode::Key4,
             KeyCode::Key5,
         ],
-        texture: "fonky-monky".to_owned(),
+        texture: "16x21px".to_owned(),
         high_round: 0.0,
         high_score: 0.0,
-        help_bubbles: true
+        help_bubbles: true,
     }
 }
 
 fn vect_difference(v1: &[Enemy], v2: &[Enemy]) -> Vec<Enemy> {
-    v1.iter().filter(|&x| !v2.contains(x)).cloned().collect()
+    if v1.len() != 0 {
+        v1.iter().filter(|&x| !v2.contains(x)).cloned().collect()
+    } else {
+        v2.iter().filter(|&x| !v1.contains(x)).cloned().collect()
+    }
 }
 
 async fn load_local_texture(id: String, user: &UserData) -> Texture2D {
@@ -122,7 +125,7 @@ async fn load_local_texture(id: String, user: &UserData) -> Texture2D {
 fn window_conf() -> Conf {
     Conf {
         window_title: "Bare King".to_owned(),
-        fullscreen: true,
+        fullscreen: false,
         icon: Some(Icon {
             small: vec_to_array(get_icon(16)),
             medium: vec_to_array(get_icon(32)),
@@ -193,6 +196,7 @@ async fn main() {
     let knight_texture: Texture2D = load_local_texture("knight".to_owned(), &user).await;
     let queen_texture: Texture2D = load_local_texture("queen".to_owned(), &user).await;
     let king_texture: Texture2D = load_local_texture("king".to_owned(), &user).await;
+
     let mut size = 0.0;
 
     let move_sound = load_audio("gameplay/move.wav".to_owned()).await;
@@ -221,7 +225,22 @@ async fn main() {
     );
 
     let mut save_timer = Instant::now();
+    let mut old_position = (mouse_position(), Enigo::mouse_location());
     loop {
+        if old_position.0 == mouse_position() && old_position.1 != Enigo::mouse_location() {
+            draw_text("Out of focus", 2.0*em, 3.0*em, em, WHITE);
+            next_frame().await;
+            continue
+        }else
+
+        if save_timer.elapsed().as_secs() > 5 {
+            save_timer = Instant::now();
+            save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
+            user.save();
+        }
+
+
+
         if debug_mode != ["up", "down", "left", "right", "b", "a"] {
             if is_key_pressed(KeyCode::Up) && debug_mode.len() == 0 {
                 debug_mode.push("up");
@@ -243,14 +262,7 @@ async fn main() {
             }
         }
 
-
         if is_quit_requested() {
-            save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
-            user.save();
-        }
-
-        if save_timer.elapsed().as_secs() > 5 {
-            save_timer = Instant::now();
             save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
             user.save();
         }
@@ -279,34 +291,27 @@ async fn main() {
         // change piece and square sizes of em has changed
 
         clear_background(BLACK);
-/*
-    --.oooooo..o               .       .    o8o                                       ooooo                                          
-    -d8P'    `Y8             .o8     .o8    `"'                                       `888'                                          
-    -Y88bo.       .ooooo.  .o888oo .o888oo oooo  ooo. .oo.    .oooooooo  .oooo.o       888   .ooooo.   .ooooo.  ooo. .oo.    .oooo.o 
-    --`"Y8888o.  d88' `88b   888     888   `888  `888P"Y88b  888' `88b  d88(  "8       888  d88' `"Y8 d88' `88b `888P"Y88b  d88(  "8 
-    --    `"Y88b 888ooo888   888     888    888   888   888  888   888  `"Y88b.        888  888       888   888  888   888  `"Y88b.  
-    -oo     .d8P 888    .o   888 .   888 .  888   888   888  `88bod8P'  o.  )88b       888  888   .o8 888   888  888   888  o.  )88b 
-    -8""88888P'  `Y8bod8P'   "888"   "888" o888o o888o o888o `8oooooo.  8""888P'      o888o `Y8bod8P' `Y8bod8P' o888o o888o 8""888P' 
-                                                            d"     YD                                                               
-                                                            "Y88888P'                                                               
-*/
+        /*
+            --.oooooo..o               .       .    o8o                                       ooooo
+            -d8P'    `Y8             .o8     .o8    `"'                                       `888'
+            -Y88bo.       .ooooo.  .o888oo .o888oo oooo  ooo. .oo.    .oooooooo  .oooo.o       888   .ooooo.   .ooooo.  ooo. .oo.    .oooo.o
+            --`"Y8888o.  d88' `88b   888     888   `888  `888P"Y88b  888' `88b  d88(  "8       888  d88' `"Y8 d88' `88b `888P"Y88b  d88(  "8
+            --    `"Y88b 888ooo888   888     888    888   888   888  888   888  `"Y88b.        888  888       888   888  888   888  `"Y88b.
+            -oo     .d8P 888    .o   888 .   888 .  888   888   888  `88bod8P'  o.  )88b       888  888   .o8 888   888  888   888  o.  )88b
+            -8""88888P'  `Y8bod8P'   "888"   "888" o888o o888o o888o `8oooooo.  8""888P'      o888o `Y8bod8P' `Y8bod8P' o888o o888o 8""888P'
+        -                                                           d"     YD
+        -                                                           "Y88888P'
+        */
 
-
-        draw_text(
-            "?",
-            screen_width() - 1.0*em,
-            21.0*em,
-            em*0.6,
-            WHITE
-        );
+        draw_text("?", screen_width() - 1.0 * em, 21.0 * em, em * 0.6, WHITE);
         if is_mouse_button_pressed(MouseButton::Left) {
-            if mouse_position().0 > screen_width() - 1.0*em
-            && mouse_position().0 < screen_width() + 0.4*em
-            && mouse_position().1 > 20.6 *em {
+            if mouse_position().0 > screen_width() - 1.0 * em
+                && mouse_position().0 < screen_width() + 0.4 * em
+                && mouse_position().1 > 20.6 * em
+            {
                 user.help_bubbles = !user.help_bubbles;
             }
         }
-
 
         if is_key_pressed(KeyCode::Escape) {
             game_data.pause = !game_data.pause;
@@ -315,8 +320,17 @@ async fn main() {
         }
 
         if debug_mode == ["up", "down", "left", "right", "b", "a"] {
-            draw_text(&format!("debug_mode      {} {}",mouse_position().0/em, mouse_position().1/em),
-             em * 1.0, em * 20.0, em, WHITE);
+            draw_text(
+                &format!(
+                    "debug_mode      {} {}",
+                    mouse_position().0 / em,
+                    mouse_position().1 / em
+                ),
+                em * 1.0,
+                em * 20.0,
+                em,
+                WHITE,
+            );
             if god_mode {
                 draw_text("god_mode", em * 1.0, em * 21.0, em, WHITE);
             }
@@ -332,17 +346,18 @@ async fn main() {
         }
 
         // when player dies or start new game
-        if game_data.screen != Screen::Game{
+        if game_data.screen != Screen::Game {
             display_home(em, &mut user, &mut game_data);
             if user.help_bubbles {
-            draw_icons(&game_data, em);
-        }
+                draw_icons(&game_data, em);
+            }
             next_frame().await;
         } else {
             // chose to display home or game
 
             let selected_square_x = (mouse_x - 1.5).round();
             let selected_square_y = (mouse_y - 1.5).round();
+            game_data.max_energy = 30.0;
 
             if !game_data.alive {
                 game_data.screen = Screen::Death;
@@ -365,16 +380,6 @@ async fn main() {
                         WHITE,
                         dsp_square.clone(),
                     );
-
-                    //     if j as f32 == game_data.player.target_y && i as f32 == game_data.player.target_x {
-                    //         draw_texture_ex(
-                    //             select,
-                    //             i as f32 * em + em,
-                    //             j as f32 * em + em,
-                    //             WHITE,
-                    //             dsp_square.clone(),
-                    //         );
-                    // }
                 }
             }
 
@@ -387,13 +392,14 @@ async fn main() {
                 dsp_square.dest_size = Some(vec2(em, em));
                 dsp_piece.dest_size = Some(vec2(em, em + em / 3.2));
             }
-
+            // ---------------------------------- Trigger ability ---------------------------------------------------------------------//
             let mut killed_pieces: Vec<Enemy> = vec![];
 
             if !game_data.pause && !selecting {
                 for i in 0..5 {
                     if is_key_pressed(user.ability_key[i]) {
                         let starting_pieces = game_data.enemies.clone();
+
                         activate_ability(user.abilities[i], &mut game_data, &user);
                         killed_pieces = [
                             killed_pieces,
@@ -404,17 +410,21 @@ async fn main() {
                 }
             }
 
-/*
-ooooooooo.   oooo                                                ooo        ooooo                                 
-`888   `Y88. `888                                                `88.       .888'                                 
- 888   .d88'  888   .oooo.   oooo    ooo  .ooooo.  oooo d8b       888b     d'888   .ooooo.  oooo    ooo  .ooooo.  
- 888ooo88P'   888  `P  )88b   `88.  .8'  d88' `88b `888""8P       8 Y88. .P  888  d88' `88b  `88.  .8'  d88' `88b 
- 888          888   .oP"888    `88..8'   888ooo888  888           8  `888'   888  888   888   `88..8'   888ooo888 
- 888          888  d8(  888     `888'    888    .o  888           8    Y     888  888   888    `888'    888    .o 
-o888o        o888o `Y888""8o     .8'     `Y8bod8P' d888b         o8o        o888o `Y8bod8P'     `8'     `Y8bod8P' 
--                            .o..P'
--                            `Y8P'
-*/
+            if killed_pieces.len() != 0 {
+                println!("killed pieces {:?}", killed_pieces);
+            }
+
+            /*
+            ooooooooo.   oooo                                                ooo        ooooo
+            `888   `Y88. `888                                                `88.       .888'
+             888   .d88'  888   .oooo.   oooo    ooo  .ooooo.  oooo d8b       888b     d'888   .ooooo.  oooo    ooo  .ooooo.
+             888ooo88P'   888  `P  )88b   `88.  .8'  d88' `88b `888""8P       8 Y88. .P  888  d88' `88b  `88.  .8'  d88' `88b
+             888          888   .oP"888    `88..8'   888ooo888  888           8  `888'   888  888   888   `88..8'   888ooo888
+             888          888  d8(  888     `888'    888    .o  888           8    Y     888  888   888    `888'    888    .o
+            o888o        o888o `Y888""8o     .8'     `Y8bod8P' d888b         o8o        o888o `Y8bod8P'     `8'     `Y8bod8P'
+            -                            .o..P'
+            -                            `Y8P'
+            */
 
             //************************************************************************************************************** */
             //--------------------------------------------- get user input then make move----------------------------------------
@@ -435,20 +445,19 @@ o888o        o888o `Y888""8o     .8'     `Y8bod8P' d888b         o8o        o888
                 game_data.enemies.retain(|e| {
                     e.x != game_data.player.target_x || e.y != game_data.player.target_y
                 });
-                let killed =  vect_difference(&e_1, &game_data.enemies);
+                let killed = vect_difference(&e_1, &game_data.enemies);
                 for j in killed {
                     killed_pieces.push(j.clone());
-                    game_data.player.energy +=
-                        match &j.piece {
-                            Piece::Pawn => 1.0,
-                            Piece::Rook => 2.0,
-                            Piece::Knight => 2.0,
-                            Piece::Bishop => 3.0,
-                            _ => 5.0,
-                        };
+                    game_data.player.energy += match &j.piece {
+                        Piece::Pawn => 1.0,
+                        Piece::Rook => 2.0,
+                        Piece::Knight => 2.0,
+                        Piece::Bishop => 3.0,
+                        _ => 5.0,
+                    };
 
-                    if game_data.player.energy >= 30.0 {
-                        game_data.player.energy = 30.0;
+                    if game_data.player.energy >= game_data.max_energy {
+                        game_data.player.energy = game_data.max_energy;
                     }
                 }
 
@@ -646,27 +655,24 @@ o888o        o888o `Y888""8o     .8'     `Y8bod8P' d888b         o8o        o888
             _`Y8bood8P'      `YbodP'    o888o
             */
 
-
-
-
-            if game_data.player.energy == 30.0 {
+            if game_data.player.energy == game_data.max_energy {
                 draw_text(
-                    &format!("{}/30", game_data.player.energy),
+                    &format!("{}/{}", game_data.player.energy, game_data.max_energy),
                     em * 18.9 + ((thread_rng().gen_range(-20..20) as f32) / 1000.0) * em,
-                    2.7 * em+ ((thread_rng().gen_range(-20..20) as f32) / 1000.0) * em,
+                    2.7 * em + ((thread_rng().gen_range(-20..20) as f32) / 1000.0) * em,
                     em * 2.1,
                     Color::from_rgba(11, 228, 11, 125),
                 );
             };
             draw_text(
-                &format!("{}/30", game_data.player.energy),
+                &format!("{}/{}", game_data.player.energy, game_data.max_energy),
                 em * 19.05,
                 2.65 * em,
                 em * 2.0,
                 BLUE,
             );
             draw_text(
-                &format!("{}/30", game_data.player.energy),
+                &format!("{}/{}", game_data.player.energy, game_data.max_energy),
                 em * 19.0,
                 2.6 * em,
                 em * 2.0,
@@ -674,7 +680,6 @@ o888o        o888o `Y888""8o     .8'     `Y8bod8P' d888b         o8o        o888
             );
 
             draw_text("energy", em * 19.0, 3.4 * em, em * 0.7, GRAY);
-
 
             // points
             draw_text(
@@ -693,55 +698,37 @@ o888o        o888o `Y888""8o     .8'     `Y8bod8P' d888b         o8o        o888
             );
             draw_text("points", em * 19.0, 6.1 * em, em * 0.7, GRAY);
 
-            if game_data.player.energy > 30.0 {
-                game_data.player.energy = 30.0
-            };
-/*
-    .                                                                                         .                      
-  .o8                                                                                       .o8                      
-.o888oo oooo  oooo  oooo d8b ooo. .oo.         .ooooo.   .ooooo.  oooo  oooo  ooo. .oo.   .o888oo  .ooooo.  oooo d8b 
-  888   `888  `888  `888""8P `888P"Y88b       d88' `"Y8 d88' `88b `888  `888  `888P"Y88b    888   d88' `88b `888""8P 
-  888    888   888   888      888   888       888       888   888  888   888   888   888    888   888ooo888  888     
-  888 .  888   888   888      888   888       888   .o8 888   888  888   888   888   888    888 . 888    .o  888     
-  "888"  `V88V"V8P' d888b    o888o o888o      `Y8bod8P' `Y8bod8P'  `V88V"V8P' o888o o888o   "888" `Y8bod8P' d888b    
-*/
+            // if game_data.player.energy > 30.0 {
+            //     game_data.player.energy = 30.0
+            // };
+            /*
+                .                                                                                         .
+              .o8                                                                                       .o8
+            .o888oo oooo  oooo  oooo d8b ooo. .oo.         .ooooo.   .ooooo.  oooo  oooo  ooo. .oo.   .o888oo  .ooooo.  oooo d8b
+              888   `888  `888  `888""8P `888P"Y88b       d88' `"Y8 d88' `88b `888  `888  `888P"Y88b    888   d88' `88b `888""8P
+              888    888   888   888      888   888       888       888   888  888   888   888   888    888   888ooo888  888
+              888 .  888   888   888      888   888       888   .o8 888   888  888   888   888   888    888 . 888    .o  888
+              "888"  `V88V"V8P' d888b    o888o o888o      `Y8bod8P' `Y8bod8P'  `V88V"V8P' o888o o888o   "888" `Y8bod8P' d888b
+            */
 
+            for i in 1..=3 {
+                if i - 1 == game_data.player.sub_round {
+                    draw_text(&format!("{}", i), (26 + i) as f32 * em, 2.5 * em, em, BLUE);
+                } else {
+                    draw_text(&format!("{}", i), (26 + i) as f32 * em, 2.5 * em, em, WHITE);
+                }
+            }
 
-    
-
-
-for i in 1..=3 {
-    
-    if i -1  == game_data.player.sub_round {
-        draw_text(
-            &format!("{}",i),
-            (26 + i)as f32*em,
-            2.5*em,
-            em,
-            BLUE
-        );
-    }else{
-        draw_text(
-            &format!("{}",i),
-            (26 + i)as f32*em,
-            2.5*em,
-            em,
-            WHITE
-        );
-    }
-}
-
-/*=    .o.        .o8        o8o  oooo   o8o      .                      .oo.          oooooooooooo  .o88o.  .o88o.                         .                     o8o  
-    =-.888.      "888        `"'  `888   `"'    .o8                    .88' `8.        `888'     `8  888 `"  888 `"                       .o8                     `"'  
-    =.8"888.      888oooo.  oooo   888  oooo  .o888oo oooo    ooo      88.  .8'         888         o888oo  o888oo   .ooooo.   .ooooo.  .o888oo      oooo  oooo  oooo  
----=.8' `888.     d88' `88b `888   888  `888    888    `88.  .8'       `88.8P           888oooo8     888     888    d88' `88b d88' `"Y8   888        `888  `888  `888  
---=.88ooo8888.    888   888  888   888   888    888     `88..8'         d888[.8'        888    "     888     888    888ooo888 888         888         888   888   888  
--=.8'     `888.   888   888  888   888   888    888 .    `888'         88' `88.         888       o  888     888    888    .o 888   .o8   888 .       888   888   888  
-o88o     o8888o  `Y8bod8P' o888o o888o o888o   "888"     .8'          `bodP'`88.      o888oooo0od8 o888o   o888o   `Y8bod8P' `Y8bod8P'   "888"       `V88V"V8P' o888o 
-                                                    -.o..P'                                                                                                           
-                                                    -`Y8P'                                                                                                            
-*/
-
+            /*=    .o.        .o8        o8o  oooo   o8o      .                      .oo.          oooooooooooo  .o88o.  .o88o.                         .                     o8o
+                =-.888.      "888        `"'  `888   `"'    .o8                    .88' `8.        `888'     `8  888 `"  888 `"                       .o8                     `"'
+                =.8"888.      888oooo.  oooo   888  oooo  .o888oo oooo    ooo      88.  .8'         888         o888oo  o888oo   .ooooo.   .ooooo.  .o888oo      oooo  oooo  oooo
+            ---=.8' `888.     d88' `88b `888   888  `888    888    `88.  .8'       `88.8P           888oooo8     888     888    d88' `88b d88' `"Y8   888        `888  `888  `888
+            --=.88ooo8888.    888   888  888   888   888    888     `88..8'         d888[.8'        888    "     888     888    888ooo888 888         888         888   888   888
+            -=.8'     `888.   888   888  888   888   888    888 .    `888'         88' `88.         888       o  888     888    888    .o 888   .o8   888 .       888   888   888
+            o88o     o8888o  `Y8bod8P' o888o o888o o888o   "888"     .8'          `bodP'`88.      o888oooo0od8 o888o   o888o   `Y8bod8P' `Y8bod8P'   "888"       `V88V"V8P' o888o
+                                                                -.o..P'
+                                                                -`Y8P'
+            */
 
             if is_mouse_button_pressed(MouseButton::Left)
                 && (17.0..=25.0).contains(&selected_square_x)
@@ -752,24 +739,21 @@ o88o     o8888o  `Y8bod8P' o888o o888o o888o   "888"     .8'          `bodP'`88.
             }
 
             draw_rectangle(
-                18.8*em,
-                8.0 *em,
-                10.0*em,
-                8.0*em,
-                Color::from_rgba(10,10,10, 255)
+                18.8 * em,
+                8.0 * em,
+                10.0 * em,
+                8.0 * em,
+                Color::from_rgba(10, 10, 10, 255),
             );
 
             if !show_effects {
-
                 draw_rectangle(
-                    18.8*em,
-                    6.9 *em,
-                    4.2*em,
-                    1.1*em,
-                    Color::from_rgba(10,10,10, 255)
+                    18.8 * em,
+                    6.9 * em,
+                    4.2 * em,
+                    1.1 * em,
+                    Color::from_rgba(10, 10, 10, 255),
                 );
-
-
 
                 //-------------------------------- Ability list ----------------------------------------//
                 draw_text("Abilities", em * 19.0, 7.6 * em, em, WHITE);
@@ -781,7 +765,7 @@ o88o     o8888o  `Y8bod8P' o888o o888o o888o   "888"     .8'          `bodP'`88.
                     GRAY,
                 );
                 for f in 0..5 {
-                    let i = f as f32*1.4;
+                    let i = f as f32 * 1.4;
                     let mut color = GRAY;
                     if metadata(user.abilities[f]).cost as f32 <= game_data.player.energy {
                         color = ORANGE
@@ -789,22 +773,20 @@ o88o     o8888o  `Y8bod8P' o888o o888o o888o   "888"     .8'          `bodP'`88.
 
                     draw_rectangle(
                         19.05 * em,
-                        (8.4 + i) *em,
-                        em*9.5,
+                        (8.4 + i) * em,
+                        em * 9.5,
                         em * 1.1,
-                        Color::from_rgba(
-                            5,5,5,255
-                        )
+                        Color::from_rgba(5, 5, 5, 255),
                     );
 
                     draw_text(
                         &format!("{:?}", user.ability_key[f]),
                         19.5 * em,
-                        (i + 9.3)  * em,
+                        (i + 9.3) * em,
                         em * 0.4,
                         GRAY,
                     );
-                    
+
                     draw_text(
                         &format!("{:?}", metadata(user.abilities[f]).cost),
                         27.5 * em,
@@ -820,7 +802,7 @@ o88o     o8888o  `Y8bod8P' o888o o888o o888o   "888"     .8'          `bodP'`88.
                         color,
                     );
                     if selected_square_x > 16.0 {
-                        if mouse_y < (8.4 + i) +   1.1 && mouse_y > (8.4 + i)  {
+                        if mouse_y < (8.4 + i) + 1.1 && mouse_y > (8.4 + i) {
                             draw_text(
                                 &metadata(user.abilities[f]).description,
                                 em,
@@ -835,13 +817,12 @@ o88o     o8888o  `Y8bod8P' o888o o888o o888o   "888"     .8'          `bodP'`88.
                     }
                 }
             } else {
-            
                 draw_rectangle(
-                    23.0*em,
-                    6.9 *em,
-                    5.2*em,
-                    1.1*em,
-                    Color::from_rgba(10,10,10, 255)
+                    23.0 * em,
+                    6.9 * em,
+                    5.2 * em,
+                    1.1 * em,
+                    Color::from_rgba(10, 10, 10, 255),
                 );
 
                 draw_text("Abilities", em * 19.0, 7.6 * em, em, GRAY);
@@ -1171,10 +1152,11 @@ o88o     o8888o  `Y8bod8P' o888o o888o o888o   "888"     .8'          `bodP'`88.
             }
 
             // select a square
-        if user.help_bubbles {
-            draw_icons(&game_data, em);
-        }
+            if user.help_bubbles {
+                draw_icons(&game_data, em);
+            }
             size = em;
+            old_position = (mouse_position(), Enigo::mouse_location());
             next_frame().await
         }
     }

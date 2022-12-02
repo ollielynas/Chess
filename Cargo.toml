@@ -14,6 +14,7 @@ savefile-derive="0.10"
 strum = "0.24"
 strum_macros = "0.24"
 image = "0.24.3"
+enigo = "0.0.14"
 
 [profile.dev]
 opt-level = 1

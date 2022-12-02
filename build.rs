@@ -14,7 +14,6 @@ fn main() -> io::Result<()> {
 
 
     println!("output path");
-
     println!("cargo:rerun-if-changed=config.json");
     println!("cargo:warning=Hello from build.rs");
     println!("cargo:warning=CWD is {:?}", env::current_dir().unwrap());

@@ -13,6 +13,7 @@ use std::path::PathBuf;
 use strum::IntoEnumIterator; // 0.17.1
 use strum_macros::EnumIter; // 0.17.1
 use crate::death::*;
+use ::rand::prelude::*;
 
 fn key_as_string(key: KeyCode) -> String {
     format!("{:?}", key)
@@ -146,7 +147,7 @@ impl UserData {
     }
 }
 
-fn new_game() -> GameData {
+pub fn new_game() -> GameData {
     let mut data = DEFAULT_GAME_STATE;
     data.alive = true;
     data
@@ -366,13 +367,13 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
 
 /*oooo    oooo                        .o8        o8o                    .o8           
 `888   .8P'                        "888        `"'                   "888           
- 888  d8'     .ooooo.  oooo    ooo  888oooo.  oooo  ooo. .oo.    .oooo888   .oooo.o 
- 88888[      d88' `88b  `88.  .8'   d88' `88b `888  `888P"Y88b  d88' `888  d88(  "8 
- 888`88b.    888ooo888   `88..8'    888   888  888   888   888  888   888  `"Y88b.  
- 888  `88b.  888    .o    `888'     888   888  888   888   888  888   888  o.  )88b 
+-888  d8'     .ooooo.  oooo    ooo  888oooo.  oooo  ooo. .oo.    .oooo888   .oooo.o 
+-88888[      d88' `88b  `88.  .8'   d88' `88b `888  `888P"Y88b  d88' `888  d88(  "8 
+-888`88b.    888ooo888   `88..8'    888   888  888   888   888  888   888  `"Y88b.  
+-888  `88b.  888    .o    `888'     888   888  888   888   888  888   888  o.  )88b 
 o888o  o888o `Y8bod8P'     .8'      `Y8bod8P' o888o o888o o888o `Y8bod88P" 8""888P' 
-                    ---.o..P'                                                       
-                    ---`Y8P'                                                        
+-                      .o..P'                                                       
+-                      `Y8P'                                                        
 */
 
 fn select_keybinds(data: &mut GameData, user: &mut UserData, em: f32) {
@@ -480,10 +481,10 @@ fn select_keybinds(data: &mut GameData, user: &mut UserData, em: f32) {
 /*
 ooooooooooooo                           .                                  
 8'   888   `8                         .o8                                  
-     888       .ooooo.  oooo    ooo .o888oo oooo  oooo  oooo d8b  .ooooo.  
-     888      d88' `88b  `88b..8P'    888   `888  `888  `888""8P d88' `88b 
-     888      888ooo888    Y888'      888    888   888   888     888ooo888 
-     888      888    .o  .o8"'88b     888 .  888   888   888     888    .o 
+-    888       .ooooo.  oooo    ooo .o888oo oooo  oooo  oooo d8b  .ooooo.  
+-    888      d88' `88b  `88b..8P'    888   `888  `888  `888""8P d88' `88b 
+-    888      888ooo888    Y888'      888    888   888   888     888ooo888 
+-    888      888    .o  .o8"'88b     888 .  888   888   888     888    .o 
     o888o     `Y8bod8P' o88'   888o   "888"  `V88V"V8P' d888b    `Y8bod8P' 
 */
 
@@ -586,8 +587,9 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
         return;
     }
 
+    // let rng = rand::gen_range(0, 10);
+    draw_text("Bare King", screen_width()/2.0 - 6.0 * em, 6.0 * em, em * 3.0, Color::from_rgba(150, 200, 100, 200));
 
-    draw_text("Bare King", screen_width()/2.0 - 6.0 * em, 4.0 * em, em * 3.0, DARKGREEN);
 
     let mouse_y = mouse_position().1;
     let mouse_x = mouse_position().0;
@@ -624,7 +626,7 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
                     }
                 }
         }
-    
+
         if  mouse_x > screen_width()/2.0 - 2.1  * em &&
             mouse_x < screen_width()/2.0 + 2.1  * em &&
             mouse_y < 12.0*em &&
@@ -648,7 +650,6 @@ pub fn display_home(em: f32, user: &mut UserData, data: &mut GameData) {
                     data.sounds.push(("click".to_owned(), 0.0));
                 }
         }
-    
         
         if  mouse_x > screen_width()/2.0 - 1.1  * em &&
             mouse_x < screen_width()/2.0 + 1.1  * em &&
