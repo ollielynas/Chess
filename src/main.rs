@@ -28,8 +28,9 @@ use audio_g::*;
 mod help;
 use help::*;
 mod death;
-use death::*;
+// use death::*;
 use enigo::Enigo;
+
 
 pub const GLOBAL_VERSION: u32 = 1;
 
@@ -160,6 +161,10 @@ fn get_icon(size: u32) -> Vec<u8> {
 
 #[macroquad::main(window_conf)]
 async fn main() {
+
+
+
+
     let mut em = (screen_height() / 32.0) * 1.5;
     let mut dsp_square = DrawTextureParams {
         // 32x32

@@ -9,12 +9,13 @@ edition = "2021"
 macroquad = "0.3"
 rand = "0.8.5"
 macroquad-particles = "0.1.1"
-savefile="0.10"
-savefile-derive="0.10"
+savefile="0.11"
+savefile-derive="0.11"
 strum = "0.24"
 strum_macros = "0.24"
 image = "0.24.3"
 enigo = "0.0.14"
+
 
 [profile.dev]
 opt-level = 1

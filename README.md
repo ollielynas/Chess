@@ -30,4 +30,6 @@
 - [x] Keybinds
 - [x] Texture pack
 - [ ] Add both start new game and continue old game options at the same time
-- [ ] stop execution when out of focus
+- [x] stop execution when out of focus
+- [ ] fullscreen option (will have to wait for macroquad update to avoid needing to reboot the game)
+- [ ] don't require a reboot to change textures (add texture object & texture list object)
