@@ -6,11 +6,12 @@
 - [x] horsy pathfinding off board
 - [ ] blip preventing airstrike from landing
 - [ ] effects list can leave window
-- [ ] Random death glitch 
+- [ ] Random death glitch (very rare)
 - [ ] you can get more than the max energy using the blip ability
 - [ ] floating point score
 - [ ] misaligned pause menu text
-- [ ] can scroll past the last paige of abilities
+- [x] can scroll past the last paige of abilities
+- [ ] help bubble setting not saved between instances
 
 ## TODO
 - [x] Death screen

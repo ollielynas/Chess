@@ -233,14 +233,22 @@ async fn main() {
     );
 
     let mut save_timer = Instant::now();
-    let mut old_position = (mouse_position(), Enigo::mouse_location());
+    let mut old_position = (mouse_position(), 
+        match cfg!(windows) {
+    true => Enigo::mouse_location(),
+    false => (0,0)
+    }
+    );
     loop {
+        if cfg!(windows) {
         if old_position.0 == mouse_position() && old_position.1 != Enigo::mouse_location() {
             draw_text("Out of focus", 2.0*em, 3.0*em, em, WHITE);
             next_frame().await;
             continue
-        }else
-
+        }else{
+            old_position = (mouse_position(), Enigo::mouse_location());
+        }
+    }
         if save_timer.elapsed().as_secs() > 5 {
             save_timer = Instant::now();
             save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
@@ -1181,7 +1189,7 @@ async fn main() {
                 draw_icons(&game_data, em);
             }
             size = em;
-            old_position = (mouse_position(), Enigo::mouse_location());
+            
             next_frame().await
         }
     }
