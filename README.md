@@ -10,7 +10,7 @@
 - [ ] misaligned pause menu text
 - [ ] help bubble setting not saved between instances
 - [ ] death is not instant and painless
-- [x] floating point score
+- [ ] floating point score
 - [x] you can get more than the max energy using the blip ability
 - [x] horsy pathfinding off board
 - [x] can scroll past the last paige of abilities
