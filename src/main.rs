@@ -163,9 +163,12 @@ fn get_icon(size: u32) -> Vec<u8> {
 async fn main() {
 
 
-
-
-    let mut em = (screen_height() / 32.0) * 1.5;
+    let mut em;
+    if screen_height() < screen_width() {
+    em = (screen_height() / 32.0) * 1.5;
+    }else{
+    em = (screen_width() / 32.0) * 1.5;
+    }
     let mut dsp_square = DrawTextureParams {
         // 32x32
         dest_size: Some(vec2(em, em)),
@@ -291,7 +294,11 @@ async fn main() {
         }
         play_sound_stack(&mut game_data).await;
 
-        em = (screen_height() / 32.0) * 1.5;
+    if screen_height() < screen_width() {
+    em = (screen_height() / 32.0) * 1.5;
+    }else{
+    em = (screen_width() / 32.0) * 1.5;
+    }
 
         // change piece and square sizes of em has changed
 
@@ -359,6 +366,14 @@ async fn main() {
             next_frame().await;
         } else {
             // chose to display home or game
+            /*  .oooooo.                                          
+ d8P'  `Y8b                                         
+888            .oooo.   ooo. .oo.  .oo.    .ooooo.  
+888           `P  )88b  `888P"Y88bP"Y88b  d88' `88b 
+888     ooooo  .oP"888   888   888   888  888ooo888 
+`88.    .88'  d8(  888   888   888   888  888    .o 
+ `Y8bood8P'   `Y888""8o o888o o888o o888o `Y8bod8P' 
+*/
 
             let selected_square_x = (mouse_x - 1.5).round();
             let selected_square_y = (mouse_y - 1.5).round();
@@ -366,6 +381,11 @@ async fn main() {
 
             if !game_data.alive {
                 game_data.screen = Screen::Death;
+            }
+            if game_data.effects.iter().any(|e| e.0 == Abilities::Dope) {
+                for _ in &game_data.effects {
+                        game_data.max_energy += 1.0
+                }
             }
 
             // draw board
@@ -703,17 +723,17 @@ async fn main() {
             );
             draw_text("points", em * 19.0, 6.1 * em, em * 0.7, GRAY);
 
-            // if game_data.player.energy > 30.0 {
-            //     game_data.player.energy = 30.0
-            // };
+            if game_data.player.energy > game_data.max_energy {
+                game_data.player.energy = game_data.max_energy
+            };
             /*
                 .                                                                                         .
-              .o8                                                                                       .o8
+-             .o8                                                                                       .o8
             .o888oo oooo  oooo  oooo d8b ooo. .oo.         .ooooo.   .ooooo.  oooo  oooo  ooo. .oo.   .o888oo  .ooooo.  oooo d8b
-              888   `888  `888  `888""8P `888P"Y88b       d88' `"Y8 d88' `88b `888  `888  `888P"Y88b    888   d88' `88b `888""8P
-              888    888   888   888      888   888       888       888   888  888   888   888   888    888   888ooo888  888
-              888 .  888   888   888      888   888       888   .o8 888   888  888   888   888   888    888 . 888    .o  888
-              "888"  `V88V"V8P' d888b    o888o o888o      `Y8bod8P' `Y8bod8P'  `V88V"V8P' o888o o888o   "888" `Y8bod8P' d888b
+-             888   `888  `888  `888""8P `888P"Y88b       d88' `"Y8 d88' `88b `888  `888  `888P"Y88b    888   d88' `88b `888""8P
+-             888    888   888   888      888   888       888       888   888  888   888   888   888    888   888ooo888  888
+-             888 .  888   888   888      888   888       888   .o8 888   888  888   888   888   888    888 . 888    .o  888
+-             "888"  `V88V"V8P' d888b    o888o o888o      `Y8bod8P' `Y8bod8P'  `V88V"V8P' o888o o888o   "888" `Y8bod8P' d888b
             */
 
             for i in 1..=3 {

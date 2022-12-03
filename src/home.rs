@@ -159,24 +159,24 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
         data.screen = Screen::Home;
     }
 
-    let mut o: Vec<Abilities> = Abilities::iter().collect();
-    o.remove(0);
-    let pages_len = (o.len() as f32 - 1.0) / 5.0;
-    if data.select_ability.page * 5 > o.len() {
-        data.select_ability.page = (o.len() as f32 / 5.0).floor() as usize;
+    let mut ability_list: Vec<Abilities> = Abilities::iter().collect();
+    ability_list.remove(0);
+    let total_number_of_pages = (ability_list.len() as f32 - 1.0) / 5.0;
+    if data.select_ability.page * 5 > ability_list.len() {
+        data.select_ability.page = (ability_list.len() as f32 / 5.0).floor() as usize;
     }
 
     for _ in 0..data.select_ability.page * 5 {
-        o.remove(0);
+        ability_list.remove(0);
     }
 
-    while o.len() > 5 {
-        o.remove(o.len() - 1);
+    while ability_list.len() > 5 {
+        ability_list.remove(ability_list.len() - 1);
     }
 
     draw_text("Abilities", 2.0 * em, 2.0 * em as f32, em * 1.6, DARKGRAY);
     draw_text(
-        &format!("  {}/{}", data.select_ability.page + 1, pages_len.ceil()),
+        &format!("  {}/{}", data.select_ability.page + 1, total_number_of_pages.ceil()),
         2.0 * em,
         20.5 * em as f32,
         em,
@@ -188,7 +188,7 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
 
     draw_rectangle(
         1.0 * em,
-        (1.0) * em,
+        1.0 * em,
         em * 11.0,
         em * 30.0,
         Color::from_rgba(10, 10, 10, 255),
@@ -272,31 +272,38 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
     }
 
     // nav arrows
-    if mouse_x > 2.0 && mouse_x < 3.0 && mouse_y > 19.5 && mouse_y < 20.5 {
-        draw_text("<", 2.0 * em, 20.5 * em, em, LIGHTGRAY);
-        if is_mouse_button_pressed(MouseButton::Left) {
-            data.sounds.push(("click".to_owned(), 0.0));
+    for i in 0..=total_number_of_pages as usize {
+        draw_rectangle(
+            12.0 * em + i as f32 * em * 2.0,
+            match i {
+                _ if  mouse_y * em > screen_height() - 1.0*em && (mouse_x - 12.0) >= (i * 2) as f32 && (mouse_x - 12.0) -1.0 <= (i * 2) as f32 => screen_height() - 0.5*em,
+                _ => screen_height() - 0.25*em,
+            },
+            
+            em,
+            match i {
+                _ if mouse_y * em > screen_height() - 1.0*em && (mouse_x - 12.0) >= (i * 2) as f32 && (mouse_x - 12.0) -1.0 <= (i * 2) as f32 => em/2.5,
+                _ => em/5.0
+            },
+            Color { r:
+                match i {
+                _ if data.select_ability.page == i => 0.5,
+                _ => 0.3
+                },
+            g: 0.3, b: 0.3, a: 1.0 }
+        );
 
-            if data.select_ability.page > 0 {
-                data.select_ability.page -= 1;
-            }
+        if mouse_y * em > screen_height() - 1.0*em && (mouse_x - 12.0) >= (i * 2) as f32 && (mouse_x - 12.0) -1.0 <= (i * 2) as f32 && is_mouse_button_pressed(MouseButton::Left) {
+            data.select_ability.page = i;
         }
-    } else {
-        draw_text("<", 2.0 * em, 20.5 * em, em, GRAY);
-    }
-    if mouse_x > 5.0 && mouse_x < 6.0 && mouse_y > 19.5 && mouse_y < 20.5 {
-        draw_text(">", 5.0 * em, 20.5 * em, em, LIGHTGRAY);
-        if is_mouse_button_pressed(MouseButton::Left) {
-            data.select_ability.page += 1;
-            data.sounds.push(("click".to_owned(), 0.0));
-        }
-    } else {
-        draw_text(">", 5.0 * em, 20.5 * em, em, GRAY);
+
+        
     }
 
-    for i in 0..o.len() {
+    // draw ability text
+    for i in 0..ability_list.len() {
         let mut color = GRAY;
-        let mut line_one: Vec<char> = metadata(o[i]).description.chars().collect();
+        let mut line_one: Vec<char> = metadata(ability_list[i]).description.chars().collect();
         let mut line_two = "".to_owned();
         let max_line_length = 60;
         if line_one.len() > max_line_length {
@@ -327,22 +334,36 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
         {
             color = LIGHTGRAY;
             if is_mouse_button_pressed(MouseButton::Left) {
-                user.abilities[data.select_ability.slot] = o[i];
+                user.abilities[data.select_ability.slot] = ability_list[i];
                 data.sounds.push(("click".to_owned(), 0.0));
                 user.save();
             }
         }
         draw_text(
-            &metadata(o[i]).name,
+            &metadata(ability_list[i]).name,
             13.0 * em,
             ((i as f32 * 2.5) * em + 2.0 * em) * 1.5,
             em * 1.2,
             color,
         );
         draw_text(
-            &format!("Cost: {}", metadata(o[i]).cost),
+            &format!("Cost: {}", metadata(ability_list[i]).cost),
             screen_width() - 4.0 * em,
             ((i as f32 * 2.5) * em + 2.0 * em) * 1.5,
+            em * 0.8,
+            color,
+        );
+
+        let length_of_effect = match metadata(ability_list[i]).duration {
+                Some(a) => format!("{} moves", a),
+                None => "Instant".to_owned(),
+        };
+
+
+        draw_text(
+            &length_of_effect,
+            screen_width() - 4.0 * em,
+            ((i as f32 * 2.5) * em + 2.3 * em) * 1.5,
             em * 0.8,
             color,
         );

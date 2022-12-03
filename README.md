@@ -8,9 +8,13 @@
 - [ ] effects list can leave window
 - [ ] Random death glitch 
 - [ ] you can get more than the max energy using the blip ability
+- [ ] floating point score
+- [ ] misaligned pause menu text
+- [ ] can scroll past the last paige of abilities
 
 ## TODO
-- [ ] Death screen
+- [x] Death screen
+- [ ] Better airstrike
 - [ ] Better moves indicator
 - [ ] better arrows for diagonal movements
 - [ ] tutorial
@@ -21,9 +25,9 @@
 - [ ] effects screen be able to show unlimited number of buffs
 - [ ] hard mode
 - [ ] ability unlocks?
-- [ ] better player texture
+- [x] better player texture
 - [ ] custom and default ability presets
-- [ ] more particles
+- [ ] more (better) particles
 - [ ] full audio
 - [ ] color customization
 - [x] new player texture

@@ -1,13 +1,12 @@
+use crate::audio_g::*;
 use crate::game_data::*;
 use crate::home::*;
 use crate::particles_fnc::*;
 use crate::player::*;
 use ::rand::prelude::*;
+use macroquad::audio::*;
 use macroquad::prelude::*;
 use strum_macros::EnumIter;
-use crate::audio_g::*;
-use macroquad::audio::*;
-
 
 pub fn targeted_ability(data: &mut GameData, point: Coord) {
     let player = Coord {
@@ -23,16 +22,31 @@ pub fn targeted_ability(data: &mut GameData, point: Coord) {
         }
 
         Abilities::Airstrike(_) => {
-            data.effects.push((Abilities::Airstrike(
-                [
-                    Coord { x: point.x + thread_rng().gen_range(-30..30) as f32 /10.0, y: point.y+ thread_rng().gen_range(-30..30) as f32 /10.0 },
-                    Coord { x: point.x + thread_rng().gen_range(-30..30) as f32 /10.0, y: point.y+ thread_rng().gen_range(-30..30) as f32 /10.0 },
-                    Coord { x: point.x + thread_rng().gen_range(-30..30) as f32 /10.0, y: point.y+ thread_rng().gen_range(-30..30) as f32 /10.0 },
-                    Coord { x: point.x + thread_rng().gen_range(-30..30) as f32 /10.0, y: point.y+ thread_rng().gen_range(-30..30) as f32 /10.0 },
-                    Coord { x: point.x + thread_rng().gen_range(-30..30) as f32 /10.0, y: point.y+ thread_rng().gen_range(-30..30) as f32 /10.0 },
-                ],
-                
-            ), 2.0));
+            data.effects.push((
+                Abilities::Airstrike([
+                    Coord {
+                        x: point.x + thread_rng().gen_range(-30..30) as f32 / 10.0,
+                        y: point.y + thread_rng().gen_range(-30..30) as f32 / 10.0,
+                    },
+                    Coord {
+                        x: point.x + thread_rng().gen_range(-30..30) as f32 / 10.0,
+                        y: point.y + thread_rng().gen_range(-30..30) as f32 / 10.0,
+                    },
+                    Coord {
+                        x: point.x + thread_rng().gen_range(-30..30) as f32 / 10.0,
+                        y: point.y + thread_rng().gen_range(-30..30) as f32 / 10.0,
+                    },
+                    Coord {
+                        x: point.x + thread_rng().gen_range(-30..30) as f32 / 10.0,
+                        y: point.y + thread_rng().gen_range(-30..30) as f32 / 10.0,
+                    },
+                    Coord {
+                        x: point.x + thread_rng().gen_range(-30..30) as f32 / 10.0,
+                        y: point.y + thread_rng().gen_range(-30..30) as f32 / 10.0,
+                    },
+                ]),
+                2.0,
+            ));
         }
 
         Abilities::Jump => {
@@ -105,8 +119,8 @@ pub enum Abilities {
     BloodBath,
     Peaceful,
     Martyrdom,
-    Airstrike([Coord;5]),
-    WallOfFire([Coord;5]),
+    Airstrike([Coord; 5]),
+    WallOfFire([Coord; 5]),
     Redstone,
     ColdStorage,
     ShortTermGains,
@@ -126,94 +140,123 @@ pub struct AbilityMetadata {
     pub name: String,
     pub description: String,
     pub cost: i32,
+    pub duration: Option<u32>,
 }
 
 pub fn metadata(a: Abilities) -> AbilityMetadata {
     match a {
         Abilities::Airstrike(_) => AbilityMetadata {
             name: "Airstrike".to_string(),
-            description: "Destroys pieces in a large radius anywhere on the board with a 2 move delay".to_string(),
+            description:
+                "Destroys pieces in a large radius anywhere on the board with a 2 move delay"
+                    .to_string(),
             cost: 20,
+            duration: Some(3),
         },
         Abilities::ShortTermGains => AbilityMetadata {
             name: "Crippling Debt".to_string(),
-            description: "+ 30 energy, but you have to pay it back 2 energy at a time. If you cannot you die".to_string(),
+            description:
+                "+ 30 energy, but you have to pay it back 2 energy at a time. If you cannot you die"
+                    .to_string(),
             cost: -30,
+            duration: Some(15),
         },
         Abilities::Redstone => AbilityMetadata {
             name: "Redstone Powder".to_string(),
             description: "Increases the duration of all active effects by 2".to_string(),
             cost: 5,
+            duration: None,
         },
         Abilities::ColdStorage => AbilityMetadata {
             name: "Cold Storage".to_string(),
-            description: "Activate ability to store 5 energy. Active a second time to get 10 energy back".to_string(),
+            description:
+                "Activate ability to store 5 energy. Active a second time to get 10 energy back"
+                    .to_string(),
             cost: 5,
+            duration: Some(9999),
         },
         Abilities::WallOfFire(_) => AbilityMetadata {
             name: "Wall Of Fire".to_string(),
-            description: "Spawns a wall that pieces cannot move through (not added yet)".to_string(),
+            description: "Spawns a wall that pieces cannot move through (not added yet)"
+                .to_string(),
             cost: 10,
+            duration: Some(10),
         },
         Abilities::Peaceful => AbilityMetadata {
             name: "Calming Lull".to_string(),
             description: "Decreases enemy spawn rate for 15 rounds".to_string(),
             cost: 10,
+            duration: Some(15),
         },
         Abilities::Martyrdom => AbilityMetadata {
             name: "Martyrdom".to_string(),
-            description: "Kills Everything. You die on the next turn. Adds 0.5x score multiplayer".to_string(),
+            description: "Kills Everything. You die on the next turn. Adds 0.5x score multiplayer"
+                .to_string(),
             cost: 0,
+            duration: Some(1),
         },
         Abilities::BloodBath => AbilityMetadata {
             name: "Blood Bath".to_string(),
-            description: "Double the effect of the multi kill multiplier for 3 rounds (cannot stack)".to_string(),
+            description: "Double the effect of the multi kill multiplier (cannot stack)"
+                .to_string(),
             cost: 5,
+            duration: Some(3),
         },
         Abilities::Jump => AbilityMetadata {
             name: "Jump".to_string(),
             description: "Allows the player to move to any space in a 3 square radius".to_string(),
             cost: 5,
+            duration: None,
         },
         Abilities::Teleport => AbilityMetadata {
             name: "Teleport".to_string(),
             description: "The ultimate open, move anywhere on the board".to_string(),
             cost: 15,
+            duration: None,
         },
         Abilities::Bank => AbilityMetadata {
             name: "Investment Banking".to_string(),
             description: "Returns 10 energy in 5 rounds".to_string(),
             cost: 5,
+            duration: Some(5),
         },
         Abilities::Blip => AbilityMetadata {
             name: "blip".to_owned(),
-            description: "spawn 5 new pieces. counts as a move. has a negative effect on active effects.".to_owned(),
+            description:
+                "spawn 5 new pieces. counts as a move. has a negative effect on active effects."
+                    .to_owned(),
             cost: -2,
+            duration: None,
         },
         Abilities::RBlast => AbilityMetadata {
             name: "radial blast".to_owned(),
             description: "kills everything in a circle around the player".to_owned(),
             cost: 10,
+            duration: None,
         },
         Abilities::DeathLaser => AbilityMetadata {
             name: "death laser".to_owned(),
             description: "can be shot at any angle, kills everything in its path".to_owned(),
             cost: 15,
+            duration: None,
         },
         Abilities::Dope => AbilityMetadata {
             name: "Dope".to_owned(),
-            description: "Get +1 max energy for every passive effect active".to_owned(),
+            description: "Get +1 max energy for every passive effect active (will not stack)"
+                .to_owned(),
             cost: 10,
+            duration: Some(9999),
         },
         _ => AbilityMetadata {
             name: "no ability selected".to_owned(),
             description: "no ability has been selected".to_owned(),
             cost: 99,
+            duration: None,
         },
     }
 }
 
-pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData) {
+pub fn activate_ability(ability: Abilities, data: &mut GameData, _user: &UserData) {
     if data.player.energy >= metadata(ability).cost as f32 {
         data.player.energy -= metadata(ability).cost as f32
     } else {
@@ -233,7 +276,7 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData
             for effect in &mut data.effects {
                 effect.1 += 2.0;
             }
-        },
+        }
         Abilities::Martyrdom => {
             data.effects.push((Abilities::Martyrdom, 1.0));
             data.enemies = vec![];
@@ -259,9 +302,7 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData
             }
             data.player.sub_round += 5;
         }
-        Abilities::Bank => {
-            data.effects.push((Abilities::Bank, 5.0));
-        }
+
         Abilities::ColdStorage => {
             let mut retrieve = true;
             for i in 0..data.effects.len() {
@@ -272,21 +313,10 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData
                 }
             }
             if retrieve {
-            data.effects.push((Abilities::ColdStorage, 9999.0));
+                data.effects.push((Abilities::ColdStorage, 9999.0));
             }
         }
-        Abilities::BloodBath => {
-            data.effects.push((Abilities::BloodBath, 3.0));
-        }
-        Abilities::ShortTermGains => {
-            data.effects.push((Abilities::ShortTermGains, 15.0));
-        }
-        Abilities::Peaceful => {
-            data.effects.push((Abilities::Peaceful, 15.0));
-        }
-        Abilities::Dope => {
-            data.effects.push((Abilities::Dope, 9999.0));
-        }
+
         Abilities::RBlast => {
             data.sounds.push(("abilities/fire.wav".to_owned(), 1.0));
             let mut blast_area: Vec<Coord> = vec![];
@@ -340,20 +370,23 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, user: &UserData
                 ability: Abilities::Airstrike(a),
             }
         }
-        _ => (),
+        _ => match metadata(ability).duration {
+            Some(a) => data.effects.push((ability, a as f32)),
+            None => {}
+        },
     }
 }
 
 /*
-ooooooooooooo           o8o                                                           .o88o.  .o88o.                         .            
-8'   888   `8           `"'                                                           888 `"  888 `"                       .o8            
--    888      oooo d8b oooo   .oooooooo  .oooooooo  .ooooo.  oooo d8b       .ooooo.  o888oo  o888oo   .ooooo.   .ooooo.  .o888oo  .oooo.o 
--    888      `888""8P `888  888' `88b  888' `88b  d88' `88b `888""8P      d88' `88b  888     888    d88' `88b d88' `"Y8   888   d88(  "8 
--    888       888      888  888   888  888   888  888ooo888  888          888ooo888  888     888    888ooo888 888         888   `"Y88b.  
--    888       888      888  `88bod8P'  `88bod8P'  888    .o  888          888    .o  888     888    888    .o 888   .o8   888 . o.  )88b 
-    o888o     d888b    o888o `8oooooo.  `8oooooo.  `Y8bod8P' d888b         `Y8bod8P' o888o   o888o   `Y8bod8P' `Y8bod8P'   "888" 8""888P' 
--                            d"     YD  d"     YD                                                                                         
--                            "Y88888P'  "Y88888P'                                                                                         
+ooooooooooooo           o8o                                                           .o88o.  .o88o.                         .
+8'   888   `8           `"'                                                           888 `"  888 `"                       .o8
+-    888      oooo d8b oooo   .oooooooo  .oooooooo  .ooooo.  oooo d8b       .ooooo.  o888oo  o888oo   .ooooo.   .ooooo.  .o888oo  .oooo.o
+-    888      `888""8P `888  888' `88b  888' `88b  d88' `88b `888""8P      d88' `88b  888     888    d88' `88b d88' `"Y8   888   d88(  "8
+-    888       888      888  888   888  888   888  888ooo888  888          888ooo888  888     888    888ooo888 888         888   `"Y88b.
+-    888       888      888  `88bod8P'  `88bod8P'  888    .o  888          888    .o  888     888    888    .o 888   .o8   888 . o.  )88b
+    o888o     d888b    o888o `8oooooo.  `8oooooo.  `Y8bod8P' d888b         `Y8bod8P' o888o   o888o   `Y8bod8P' `Y8bod8P'   "888" 8""888P'
+-                            d"     YD  d"     YD
+-                            "Y88888P'  "Y88888P'
 */
 
 pub fn trigger_effects(data: &mut GameData) {
@@ -366,31 +399,29 @@ pub fn trigger_effects(data: &mut GameData) {
                         data.player.energy = 30.0;
                     }
                 }
-            },
+            }
             Abilities::Martyrdom => {
                 if effect.1 <= 0.0 {
                     data.alive = false;
-                    }
-            }
-            Abilities::Dope => {
-                
+                }
             }
             Abilities::ShortTermGains => {
                 if data.player.energy >= 2.0 {
                     data.player.energy -= 2.0;
-                }else {
+                } else {
                     data.alive = false;
                 }
             }
             Abilities::Airstrike(b) => {
                 if effect.1 <= 0.0 {
                     for i in b {
-                        data.enemies.retain(|f| ((f.x-i.x).powi(2) + (f.y-i.y).powi(2)).powf(0.5) > 3.0);
+                        data.enemies.retain(|f| {
+                            ((f.x - i.x).powi(2) + (f.y - i.y).powi(2)).powf(0.5) > 3.0
+                        });
                     }
                 }
             }
-            _ => {},
+            _ => {}
         }
-
     }
 }
