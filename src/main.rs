@@ -1139,7 +1139,7 @@ async fn main() {
                 };
                 game_data.score += piece_value * score_multiplier;
 
-                let mut text = format!("{}x{}", score_multiplier, piece_value);
+                let mut text = format!("{}x{}", (score_multiplier*100.0).round()/100.0, piece_value);
                 if killed_pieces.len() == 1 {
                     text = format!("{}", piece_value)
                 }
