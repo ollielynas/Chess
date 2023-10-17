@@ -12,6 +12,7 @@ mod home;
 use home::*;
 mod particles_fnc;
 use particles_fnc::*;
+use std::collections::HashSet;
 use std::path::Path;
 extern crate savefile;
 use savefile::prelude::*;
@@ -30,7 +31,6 @@ use help::*;
 mod death;
 // use death::*;
 use enigo::Enigo;
-
 
 pub const GLOBAL_VERSION: u32 = 1;
 
@@ -103,11 +103,10 @@ fn default_user_values() -> UserData {
 }
 
 fn vect_difference(v1: &[Enemy], v2: &[Enemy]) -> Vec<Enemy> {
-    if v1.len() != 0 {
-        v1.iter().filter(|&x| !v2.contains(x)).cloned().collect()
-    } else {
-        v2.iter().filter(|&x| !v1.contains(x)).cloned().collect()
-    }
+
+    
+        [v1.iter().filter(|&x| !v2.contains(x)).cloned().collect::<Vec<Enemy>>(),
+        v2.iter().filter(|&x| !v1.contains(x)).cloned().collect::<Vec<Enemy>>()].concat()
 }
 
 async fn load_local_texture(id: String, user: &UserData) -> Texture2D {
@@ -161,13 +160,11 @@ fn get_icon(size: u32) -> Vec<u8> {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-
-
     let mut em;
     if screen_height() < screen_width() {
-    em = (screen_height() / 32.0) * 1.5;
-    }else{
-    em = (screen_width() / 32.0) * 1.5;
+        em = (screen_height() / 32.0) * 1.5;
+    } else {
+        em = (screen_width() / 32.0) * 1.5;
     }
     let mut dsp_square = DrawTextureParams {
         // 32x32
@@ -233,29 +230,28 @@ async fn main() {
     );
 
     let mut save_timer = Instant::now();
-    let mut old_position = (mouse_position(), 
+    let mut old_position = (
+        mouse_position(),
         match cfg!(windows) {
-    true => Enigo::mouse_location(),
-    false => (0,0)
-    }
+            true => Enigo::mouse_location(),
+            false => (0, 0),
+        },
     );
     loop {
         if cfg!(windows) {
-        if old_position.0 == mouse_position() && old_position.1 != Enigo::mouse_location() {
-            draw_text("Out of focus", 2.0*em, 3.0*em, em, WHITE);
-            next_frame().await;
-            continue
-        }else{
-            old_position = (mouse_position(), Enigo::mouse_location());
+            if old_position.0 == mouse_position() && old_position.1 != Enigo::mouse_location() {
+                draw_text("Out of focus", 2.0 * em, 3.0 * em, em, WHITE);
+                next_frame().await;
+                continue;
+            } else {
+                old_position = (mouse_position(), Enigo::mouse_location());
+            }
         }
-    }
         if save_timer.elapsed().as_secs() > 5 {
             save_timer = Instant::now();
             save_file("game_data.bin", GLOBAL_VERSION, &game_data).unwrap();
             user.save();
         }
-
-
 
         if debug_mode != ["up", "down", "left", "right", "b", "a"] {
             if is_key_pressed(KeyCode::Up) && debug_mode.len() == 0 {
@@ -302,11 +298,11 @@ async fn main() {
         }
         play_sound_stack(&mut game_data).await;
 
-    if screen_height() < screen_width() {
-    em = (screen_height() / 32.0) * 1.5;
-    }else{
-    em = (screen_width() / 32.0) * 1.5;
-    }
+        if screen_height() < screen_width() {
+            em = (screen_height() / 32.0) * 1.5;
+        } else {
+            em = (screen_width() / 32.0) * 1.5;
+        }
 
         // change piece and square sizes of em has changed
 
@@ -374,14 +370,14 @@ async fn main() {
             next_frame().await;
         } else {
             // chose to display home or game
-            /*  .oooooo.                                          
- d8P'  `Y8b                                         
-888            .oooo.   ooo. .oo.  .oo.    .ooooo.  
-888           `P  )88b  `888P"Y88bP"Y88b  d88' `88b 
-888     ooooo  .oP"888   888   888   888  888ooo888 
-`88.    .88'  d8(  888   888   888   888  888    .o 
- `Y8bood8P'   `Y888""8o o888o o888o o888o `Y8bod8P' 
-*/
+            /*  .oooooo.
+             d8P'  `Y8b
+            888            .oooo.   ooo. .oo.  .oo.    .ooooo.
+            888           `P  )88b  `888P"Y88bP"Y88b  d88' `88b
+            888     ooooo  .oP"888   888   888   888  888ooo888
+            `88.    .88'  d8(  888   888   888   888  888    .o
+             `Y8bood8P'   `Y888""8o o888o o888o o888o `Y8bod8P'
+            */
 
             let selected_square_x = (mouse_x - 1.5).round();
             let selected_square_y = (mouse_y - 1.5).round();
@@ -389,10 +385,11 @@ async fn main() {
 
             if !game_data.alive {
                 game_data.screen = Screen::Death;
+                continue;
             }
             if game_data.effects.iter().any(|e| e.0 == Abilities::Dope) {
                 for _ in &game_data.effects {
-                        game_data.max_energy += 1.0
+                    game_data.max_energy += 1.0
                 }
             }
 
@@ -426,26 +423,21 @@ async fn main() {
                 dsp_piece.dest_size = Some(vec2(em, em + em / 3.2));
             }
             // ---------------------------------- Trigger ability ---------------------------------------------------------------------//
-            let mut killed_pieces: Vec<Enemy> = vec![];
+            
+            let starting_pieces = game_data.enemies.clone();
 
             if !game_data.pause && !selecting {
                 for i in 0..5 {
                     if is_key_pressed(user.ability_key[i]) {
-                        let starting_pieces = game_data.enemies.clone();
-
                         activate_ability(user.abilities[i], &mut game_data, &user);
-                        killed_pieces = [
-                            killed_pieces,
-                            vect_difference(&starting_pieces, &game_data.enemies),
-                        ]
-                        .concat();
+
                     }
                 }
             }
 
-            if killed_pieces.len() != 0 {
-                println!("killed pieces {:?}", killed_pieces);
-            }
+            // calculate teh pieces killed by an ability
+            let mut killed_pieces = vect_difference(&starting_pieces, &game_data.enemies);
+
 
             /*
             ooooooooo.   oooo                                                ooo        ooooo
@@ -628,7 +620,7 @@ async fn main() {
                 }
             }
             game_data.player.update_pos();
-
+            println!("{:?}", game_data.bubble_particles);
             for i in &mut game_data.bubble_particles {
                 draw_circle(
                     i.x * em,
@@ -656,12 +648,12 @@ async fn main() {
                                 b.x * em,
                                 b.y * em,
                                 em * 3.0,
-                                em / 2.0,
+                                em / 5.0,
                                 Color {
                                     r: 1.0,
                                     g: 0.0,
                                     b: 0.0,
-                                    a: 0.8,
+                                    a: 0.5,
                                 },
                             );
                         }
@@ -735,14 +727,14 @@ async fn main() {
                 game_data.player.energy = game_data.max_energy
             };
             /*
-                .                                                                                         .
--             .o8                                                                                       .o8
-            .o888oo oooo  oooo  oooo d8b ooo. .oo.         .ooooo.   .ooooo.  oooo  oooo  ooo. .oo.   .o888oo  .ooooo.  oooo d8b
--             888   `888  `888  `888""8P `888P"Y88b       d88' `"Y8 d88' `88b `888  `888  `888P"Y88b    888   d88' `88b `888""8P
--             888    888   888   888      888   888       888       888   888  888   888   888   888    888   888ooo888  888
--             888 .  888   888   888      888   888       888   .o8 888   888  888   888   888   888    888 . 888    .o  888
--             "888"  `V88V"V8P' d888b    o888o o888o      `Y8bod8P' `Y8bod8P'  `V88V"V8P' o888o o888o   "888" `Y8bod8P' d888b
-            */
+                            .                                                                                         .
+            -             .o8                                                                                       .o8
+                        .o888oo oooo  oooo  oooo d8b ooo. .oo.         .ooooo.   .ooooo.  oooo  oooo  ooo. .oo.   .o888oo  .ooooo.  oooo d8b
+            -             888   `888  `888  `888""8P `888P"Y88b       d88' `"Y8 d88' `88b `888  `888  `888P"Y88b    888   d88' `88b `888""8P
+            -             888    888   888   888      888   888       888       888   888  888   888   888   888    888   888ooo888  888
+            -             888 .  888   888   888      888   888       888   .o8 888   888  888   888   888   888    888 . 888    .o  888
+            -             "888"  `V88V"V8P' d888b    o888o o888o      `Y8bod8P' `Y8bod8P'  `V88V"V8P' o888o o888o   "888" `Y8bod8P' d888b
+                        */
 
             for i in 1..=3 {
                 if i - 1 == game_data.player.sub_round {
@@ -1023,45 +1015,46 @@ async fn main() {
                 }
             }
             if game_data.select_square.select_mode {
-                draw_texture_ex(
-                    select,
-                    selected_square_x * em + em,
-                    selected_square_y * em + em,
-                    WHITE,
-                    dsp_square.clone(),
-                );
-                if is_mouse_button_pressed(MouseButton::Left)
-                    && (0.0..=15.0).contains(&selected_square_x)
+                if (0.0..=15.0).contains(&selected_square_x)
                     && (0.0..=15.0).contains(&selected_square_y)
                 {
-                    let starting_pieces = game_data.enemies.clone();
-                    game_data.sounds.push(("click".to_owned(), 0.0));
-
-                    targeted_ability(
-                        &mut game_data,
-                        Coord {
-                            x: selected_square_x as f32,
-                            y: selected_square_y as f32,
-                        },
+                    draw_texture_ex(
+                        select,
+                        selected_square_x * em + em,
+                        selected_square_y * em + em,
+                        WHITE,
+                        dsp_square.clone(),
                     );
-                    game_data.select_square = SelectSquare {
-                        ..Default::default()
-                    };
-                    killed_pieces = [
-                        killed_pieces,
-                        vect_difference(&starting_pieces, &game_data.enemies),
-                    ]
-                    .concat();
+                    if is_mouse_button_pressed(MouseButton::Left) {
+                        let starting_pieces = game_data.enemies.clone();
+                        game_data.sounds.push(("click".to_owned(), 0.0));
+
+                        targeted_ability(
+                            &mut game_data,
+                            Coord {
+                                x: selected_square_x as f32,
+                                y: selected_square_y as f32,
+                            },
+                        );
+                        game_data.select_square = SelectSquare {
+                            ..Default::default()
+                        };
+                        killed_pieces = [
+                            killed_pieces,
+                            vect_difference(&starting_pieces, &game_data.enemies),
+                        ]
+                        .concat();
+                    }
                 }
             }
-            let e_1 = game_data.enemies.clone();
+            let pre_attack_enemy_list = game_data.enemies.clone();
             game_data
                 .enemies
                 .retain(|e| e.x != game_data.player.target_x || e.y != game_data.player.target_y);
 
-            if !vect_difference(&e_1, &game_data.enemies).is_empty() {
-                killed_pieces.push(vect_difference(&e_1, &game_data.enemies)[0].clone());
-                game_data.player.energy += match vect_difference(&e_1, &game_data.enemies)[0].piece
+            if !vect_difference(&pre_attack_enemy_list, &game_data.enemies).is_empty() {
+                killed_pieces.push(vect_difference(&pre_attack_enemy_list, &game_data.enemies)[0].clone());
+                game_data.player.energy += match vect_difference(&pre_attack_enemy_list, &game_data.enemies)[0].piece
                 {
                     Piece::Pawn => 1.0,
                     Piece::Rook => 2.0,
@@ -1139,7 +1132,11 @@ async fn main() {
                 };
                 game_data.score += piece_value * score_multiplier;
 
-                let mut text = format!("{}x{}", (score_multiplier*100.0).round()/100.0, piece_value);
+                let mut text = format!(
+                    "{}x{}",
+                    (score_multiplier * 100.0).round() / 100.0,
+                    piece_value
+                );
                 if killed_pieces.len() == 1 {
                     text = format!("{}", piece_value)
                 }
@@ -1189,7 +1186,7 @@ async fn main() {
                 draw_icons(&game_data, em);
             }
             size = em;
-            
+
             next_frame().await
         }
     }

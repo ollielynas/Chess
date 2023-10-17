@@ -287,7 +287,7 @@ fn select_ability(data: &mut GameData, user: &mut UserData, em: f32) {
             },
             Color { r:
                 match i {
-                _ if data.select_ability.page == i => 0.5,
+                _ if data.select_ability.page == i => 1.0,
                 _ => 0.3
                 },
             g: 0.3, b: 0.3, a: 1.0 }

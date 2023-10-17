@@ -142,7 +142,7 @@ pub struct AbilityMetadata {
     pub cost: i32,
     pub duration: Option<u32>,
 }
-
+/// contains the data for each ability
 pub fn metadata(a: Abilities) -> AbilityMetadata {
     match a {
         Abilities::Airstrike(_) => AbilityMetadata {
@@ -279,6 +279,26 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, _user: &UserDat
         }
         Abilities::Martyrdom => {
             data.effects.push((Abilities::Martyrdom, 1.0));
+            for enemy in &data.enemies {
+                let l = thread_rng().gen_range(10..30);
+                let r = thread_rng().gen_range(10..30);
+                data.bubble_particles.push(Bubble {
+                    x: enemy.x
+                        + 1.5
+                        + thread_rng().gen_range(-10..10) as f32 / 100.0,
+                    y: enemy.y
+                        + 1.5
+                        + thread_rng().gen_range(-10..10) as f32 / 100.0,
+                    color: [0.0,0.0,0.0,thread_rng().gen_range(0..10) as f32 / 10.0 * 255.0],
+                    r: r as f32 / 100.0,
+                    decay: (r as f32 / l as f32) / 100.0,
+                    x_velocity: thread_rng().gen_range(-15..15) as f32 / 5000.0,
+                    y_velocity: thread_rng().gen_range(-15..0) as f32 / 500.0,
+                    lifetime: l as f32,
+                });
+                println!("bubble");
+            }
+            println!("{:?}" , data.bubble_particles);
             data.enemies = vec![];
         }
         Abilities::Teleport => {
@@ -352,7 +372,7 @@ pub fn activate_ability(ability: Abilities, data: &mut GameData, _user: &UserDat
             }
 
             data.enemies
-                .retain(|f| !blast_area.contains(&Coord { x: f.x, y: f.y }))
+                .retain(|f| !blast_area.contains(&Coord { x: f.x, y: f.y }));
         }
         Abilities::DeathLaser => {
             data.select_square = SelectSquare {
